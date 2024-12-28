@@ -1,0 +1,19 @@
+[project]
+name = "dompa"
+version = "0.1.0"
+description = "A HTML5 parser."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Asko Nõmm", email = "asko@nmm.ee" }
+]
+dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Development Status :: 1 - Planning"
+]
+
+[tool.black]
+line-length = 100
