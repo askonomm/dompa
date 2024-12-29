@@ -12,7 +12,7 @@ class Node:
     attributes: Dict[str, str]
     children: list[Union[TextNode, Node]]
 
-    def __init__(self, name: str, attributes: Dict[str, str], children: list[Union[TextNode, Node]]):
+    def __init__(self, name: str, attributes: Dict[str, str], children: list[Union[TextNode, Node]]) -> None:
         self.name = name
         self.attributes = attributes
         self.children = children
@@ -23,7 +23,7 @@ class IRNode:
     coords: Tuple[int, int]
     children: list[Union[IRNode, str]]
 
-    def __init__(self, name: str, coords: Tuple[int, int]):
+    def __init__(self, name: str, coords: Tuple[int, int]) -> None:
         self.name = name
         self.coords = coords
 
@@ -35,7 +35,7 @@ class Dompa:
     __block_elements = ["html", "head", "body", "div", "span", "a"]
     __inline_elements = ["!doctype", "img", "input"]
 
-    def __init__(self, template: str):
+    def __init__(self, template: str) -> None:
         self.__template = template
         self.__ir_nodes = []
         self.__nodes = []
@@ -43,7 +43,7 @@ class Dompa:
         self.__join_ir_nodes()
         self.__create_nodes()
 
-    def __create_ir_nodes(self):
+    def __create_ir_nodes(self) -> None:
         tag_start = None
         tag_end = None
         text_start = None
@@ -259,7 +259,10 @@ class Dompa:
 
         return node_str[attr_str_start:attr_str_end]
 
-    def to_html(self):
+    def to_nodes(self) -> list[Union[TextNode, Node]]:
+        return self.__nodes
+
+    def to_html(self) -> str:
         return self.__recur_to_html(self.__nodes)
 
     def __recur_to_html(self, nodes: list[Union[TextNode, Node]]) -> str:
