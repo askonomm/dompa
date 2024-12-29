@@ -1,5 +1,7 @@
 # Dompa
 
+![Coverage](https://raw.githubusercontent.com/askonomm/flatmatter/refs/heads/master/coverage-badge.svg)
+
 A _work-in-progress_ HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, 
 and provides an API for querying and manipulating the node tree.
 
@@ -31,7 +33,7 @@ You can run queries on the node tree to get or manipulate node(s).
 
 ### `find`
 
-You can find nodes with the `find` method which takes a `Callable` that gets `Node` passed to it and that has to return \
+You can find nodes with the `find` method which takes a `Callable` that gets `Node` passed to it and that has to return 
 a boolean `true` or `false`, like so:
 
 ```python
@@ -43,7 +45,7 @@ list_items = dom.find(lambda n: n.name == "li")
 
 ### `update`
 
-You can update nodes with the `update` method which takes a `Callable`, like so:
+You can update nodes with the `update` method which takes a `Callable` that gets a `Node` passed to it, like so:
 
 ```python
 from dompa import Dompa
