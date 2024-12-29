@@ -259,7 +259,24 @@ class Dompa:
 
         return node_str[attr_str_start:attr_str_end]
 
-    def toHtml(self):
-        pass
+    def to_html(self):
+        return self.__recur_to_html(self.__nodes)
 
-Dompa("<!DOCTYPE html><div>hello<img src=\"img.jpg\"></div>").toHtml()
+    def __recur_to_html(self, nodes: list[Union[TextNode, Node]]) -> str:
+        html = ""
+
+        for node in nodes:
+            if isinstance(node, TextNode):
+                html += node.value
+            else:
+                if node.name.lower() in self.__block_elements:
+                    html += f"<{node.name}>"
+                    html += self.__recur_to_html(node.children)
+                    html += f"</{node.name}>"
+
+                if node.name.lower() in self.__inline_elements:
+                    html += f"<{node.name}>"
+
+        return html
+
+print(Dompa("<!DOCTYPE html><div>hello<img src=\"img.jpg\"></div>").to_html())
