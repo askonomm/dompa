@@ -1,6 +1,6 @@
 # Dompa
 
-![Coverage](https://raw.githubusercontent.com/askonomm/flatmatter/refs/heads/master/coverage-badge.svg)
+![Coverage](https://raw.githubusercontent.com/askonomm/dompa/refs/heads/master/coverage-badge.svg)
 
 A _work-in-progress_ HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, 
 and provides an API for querying and manipulating the node tree.
