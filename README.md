@@ -1,8 +1,7 @@
 # Dompa
 
 A _work-in-progress_ HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, 
-and provides an API that aims to be [Web APIs](https://developer.mozilla.org/en-US/docs/Web/API) compatible to 
-modify said node tree.
+and provides an API for querying and manipulating the node tree.
 
 ## Install
 
