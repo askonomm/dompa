@@ -1,11 +1,12 @@
 from __future__ import annotations
 from typing import Dict, Any, Tuple, Callable, Optional, Union
-from .nodes import IRNode, TextNode, Node
+from .query_engine import QueryEngine
+from .nodes import IrNode, TextNode, Node
 
 
-class Dompa:
+class Dompa(QueryEngine):
     __template: str
-    __ir_nodes: list[IRNode]
+    __ir_nodes: list[IrNode]
     __nodes: list[Union[TextNode, Node]]
     __block_elements = ["html", "head", "body", "div", "span", "a"]
     __inline_elements = ["!doctype", "img", "input"]
@@ -17,6 +18,7 @@ class Dompa:
         self.__create_ir_nodes()
         self.__join_ir_nodes()
         self.__create_nodes()
+        super().__init__(self.__nodes)
 
     def __create_ir_nodes(self) -> None:
         tag_start = None
@@ -46,10 +48,10 @@ class Dompa:
                 name = tag[1:-1].split(" ")[0].strip()
 
                 if name.lower() in self.__block_elements:
-                    self.__ir_nodes.append(IRNode(name=name, coords=(tag_start, 0)))
+                    self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, 0)))
 
                 if name.lower() in self.__inline_elements:
-                    self.__ir_nodes.append(IRNode(name=name, coords=(tag_start, tag_end)))
+                    self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, tag_end)))
 
                 tag_start = None
                 tag_end = None
@@ -59,7 +61,7 @@ class Dompa:
                 text_start = idx
 
             if text_start is not None and text_end is not None:
-                self.__ir_nodes.append(IRNode(name="text", coords=(text_start, text_end)))
+                self.__ir_nodes.append(IrNode(name="text", coords=(text_start, text_end)))
 
                 text_start = None
                 text_end = None
@@ -85,7 +87,7 @@ class Dompa:
 
         self.__ir_nodes = [node for node in self.__ir_nodes if node.coords not in set_coords]
 
-    def __recur_ir_node_children(self, nodes: list[Tuple[int, IRNode]], set_coords: set):
+    def __recur_ir_node_children(self, nodes: list[Tuple[int, IrNode]], set_coords: set):
         children = []
 
         for idx, child_node in nodes:
@@ -99,7 +101,7 @@ class Dompa:
 
         return children
 
-    def __find_ir_nodes_in_coords(self, coords: Tuple[int, int]) -> list[Tuple[int, IRNode]]:
+    def __find_ir_nodes_in_coords(self, coords: Tuple[int, int]) -> list[Tuple[int, IrNode]]:
         ir_block_nodes = []
         [start, end] = coords
 
@@ -125,7 +127,7 @@ class Dompa:
     def __create_nodes(self):
         self.__nodes = self.__recur_create_nodes(self.__ir_nodes)
 
-    def __recur_create_nodes(self, ir_nodes: list[IRNode]) -> list[Union[TextNode, Node]]:
+    def __recur_create_nodes(self, ir_nodes: list[IrNode]) -> list[Union[TextNode, Node]]:
         nodes = []
 
         for ir_node in ir_nodes:
@@ -138,7 +140,7 @@ class Dompa:
 
         return nodes
 
-    def __ir_node_to_node(self, ir_node: IRNode) -> Union[TextNode, Node]:
+    def __ir_node_to_node(self, ir_node: IrNode) -> Union[TextNode, Node]:
         if ir_node.name == "text":
             return TextNode(
                 value=self.__template[ir_node.coords[0]:ir_node.coords[1]],
