@@ -177,6 +177,69 @@ class Dompa:
 
     def __node_attributes_from_coords(self, coords: Tuple[int, int]) -> Dict[str, str]:
         attributes = {}
+        attr_str = self.__node_attr_str_from_coords(coords)
+
+        if attr_str is None:
+            return attributes
+
+        iter_attr_name = ""
+        iter_attr_value = None
+
+        for idx, char in enumerate(attr_str):
+            # if we encounter a space, and the last char of `iter_attr_value` is `"`
+            # it means we're not in an attr value, in which case a
+            # space would be part of the value, but rather ending an attribute
+            # declaration and moving onto the next one.
+            if char == " " and iter_attr_value is not None and iter_attr_value[-1] == '"':
+                if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
+                    iter_attr_value = iter_attr_value[1:-1]
+
+                attributes[f"{iter_attr_name}{char}".strip()] = iter_attr_value
+                iter_attr_name = ""
+                iter_attr_value = None
+                continue
+
+            # same as above is true when we are the last char of the entire `attr_str`,
+            # in which case we are ending an attribute declaration.
+            if idx == len(attr_str) - 1 and iter_attr_value is not None:
+                iter_attr_value += char
+
+                if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
+                    iter_attr_value = iter_attr_value[1:-1]
+
+                attributes[f"{iter_attr_name}{char}".strip()] = iter_attr_value
+                iter_attr_name = ""
+                iter_attr_value = None
+                continue
+
+            # and, same as above is also true when we encounter a space and there is
+            # no `iter_attr_value`, meaning it is a Truthy attribute, which needs
+            # no explicit value.
+            if (char == " " or idx == len(attr_str) - 1) and iter_attr_value is None:
+                attributes[f"{iter_attr_name}{char}".strip()] = True
+                iter_attr_name = ""
+                iter_attr_value = None
+                continue
+
+            # If we encounter the `=` char, it means we are done with `iter_attr_name`,
+            # and can move on to start creating the `iter_attr_value`.
+            if iter_attr_value is None and char == "=":
+                iter_attr_value = ""
+                continue
+
+            # in all other cases if we have already set `iter_attr_value`, keep on
+            # collecting it.
+            if iter_attr_value is not None:
+                iter_attr_value += char
+                continue
+
+            # or if we have not set `iter_attr_value`, keep on collecting `iter_attr_name`.
+            if iter_attr_value is None:
+                iter_attr_name += char
+
+        return attributes
+
+    def __node_attr_str_from_coords(self, coords: Tuple[int, int]) -> Optional[str]:
         node_str = self.__template[coords[0]:coords[1]]
         attr_str_start = None
         attr_str_end = None
@@ -192,58 +255,11 @@ class Dompa:
                 attr_str_start = idx + 1
 
         if attr_str_start is None or attr_str_end is None:
-            return attributes
+            return None
 
-        # build attributes from attribute str
-        attr_str = node_str[attr_str_start:attr_str_end]
-        iter_attr_name = ""
-        iter_attr_value = None
-
-        for idx, char in enumerate(attr_str):
-            # if we encounter a space, and the last char of iter_attr_value is `"`
-            # it means we're not in an attr value, in which case a
-            # space would be part of the value, but rather ending an attribute
-            # declaration and moving onto the next one.
-            if char == " " and iter_attr_value is not None and iter_attr_value[-1] == '"':
-                if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
-                    iter_attr_value = iter_attr_value[1:-1]
-
-                attributes[f"{iter_attr_name}{char}".strip()] = iter_attr_value
-                iter_attr_name = ""
-                iter_attr_value = None
-                continue
-
-            if idx == len(attr_str) - 1 and iter_attr_value is not None:
-                iter_attr_value += char
-
-                if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
-                    iter_attr_value = iter_attr_value[1:-1]
-
-                attributes[f"{iter_attr_name}{char}".strip()] = iter_attr_value
-                iter_attr_name = ""
-                iter_attr_value = None
-                continue
-
-            if (char == " " or idx == len(attr_str) - 1) and iter_attr_value is None:
-                attributes[f"{iter_attr_name}{char}".strip()] = True
-                iter_attr_name = ""
-                iter_attr_value = None
-                continue
-
-            if iter_attr_value is None and char == "=":
-                iter_attr_value = ""
-                continue
-
-            if iter_attr_value is not None:
-                iter_attr_value += char
-                continue
-
-            if iter_attr_value is None:
-                iter_attr_name += char
-
-        return attributes
+        return node_str[attr_str_start:attr_str_end]
 
     def toHtml(self):
         pass
 
-Dompa("<div>hello<img src=\"img.jpg\"></div>").toHtml()
+Dompa("<!DOCTYPE html><div>hello<img src=\"img.jpg\"></div>").toHtml()
