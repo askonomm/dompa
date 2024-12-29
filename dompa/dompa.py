@@ -234,10 +234,10 @@ class Dompa:
 
         return node_str[attr_str_start:attr_str_end]
 
-    def to_nodes(self) -> list[Union[TextNode, Node]]:
+    def nodes(self) -> list[Union[TextNode, Node]]:
         return self.__nodes
 
-    def to_html(self) -> str:
+    def html(self) -> str:
         return self.__recur_to_html(self.__nodes)
 
     def __recur_to_html(self, nodes: list[Union[TextNode, Node]]) -> str:
