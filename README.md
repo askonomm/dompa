@@ -26,118 +26,48 @@ nodes = dom.nodes()
 html = dom.html()
 ```
 
-## Queries
+## DOM manipulation
 
-You can run queries on the node tree to get or manipulate node(s), as well as queries on nodes themselves, 
-or their children. The Query API is trying to follow the [Web APIs](https://developer.mozilla.org/en-US/docs/Web/API) 
-as closely as it can
+You can run queries on the node tree to get or manipulate node(s).
 
-### `after`
+### `find`
 
-Not implemented yet.
+You can find nodes with the `find` method which takes a `Callable` that gets `Node` passed to it and that has to return \
+a boolean `true` or `false`, like so:
 
-### `append`
+```python
+from dompa import Dompa
 
-Not implemented yet.
+dom = Dompa("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>")
+list_items = dom.find(lambda n: n.name == "li")
+```
 
-### `before`
+### `update`
 
-Not implemented yet.
+You can update nodes with the `update` method which takes a `Callable`, like so:
 
-### `closest`
+```python
+from dompa import Dompa
+from dompa.nodes import Node, TextNode
 
-Not implemented yet.
+dom = Dompa("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>")
 
-### `get_attribute`
+def update_title(item: Node) -> None:
+    if item.name == "h1":
+        item.children = [TextNode(value="New Title")]
 
-Not implemented yet.
-
-### `get_attribute_names`
-
-Not implemented yet.
-
-### `get_attribute_node`
-
-Not implemented yet.
-
-### `get_elements_by_class_name`
-
-Not implemented yet.
-
-### `get_elements_by_tag_name`
-
-Not implemented yet.
-
-### `get_html`
-
-Not implemented yet.
-
-### `has_attribute`
-
-Not implemented yet.
-
-### `has_attributes`
-
-Not implemented yet.
-
-### `insert_adjacent_element`
-
-Not implemented yet.
-
-### `insert_adjacent_html`
-
-Not implemented yet.
-
-### `insert_adjacent_text`
-
-Not implemented yet.
-
-### `matches`
-
-Not implemented yet.
-
-### `prepend`
-
-Not implemented yet.
-
-### `querySelector`
-
-Not implemented yet.
-
-### `querySelectorAll`
-
-Not implemented yet.
+dom.update(update_title)
+```
 
 ### `remove`
 
 Not implemented yet.
 
-### `remove_attribute`
+### `add_before`
 
 Not implemented yet.
 
-### `remove_attribute_node`
+### `add_after`
 
 Not implemented yet.
-
-### `replace_children`
-
-Not implemented yet.
-
-### `replace_with`
-
-Not implemented yet.
-
-### `set_attribute`
-
-Not implemented yet.
-
-### `set_attribute_node`
-
-Not implemented yet.
-
-### `toggle_attribute`
-
-Not implemented yet.
-
 

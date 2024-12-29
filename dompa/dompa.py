@@ -1,14 +1,13 @@
 from __future__ import annotations
 from typing import Dict, Any, Tuple, Callable, Optional, Union
-from .query_engine import QueryEngine
 from .nodes import IrNode, TextNode, Node
 
 
-class Dompa(QueryEngine):
+class Dompa:
     __template: str
     __ir_nodes: list[IrNode]
     __nodes: list[Union[TextNode, Node]]
-    __block_elements = ["html", "head", "body", "div", "span", "a"]
+    __block_elements = ["html", "head", "body", "div", "span", "a", "h1", "h2", "h3", "h4", "h5", "h6"]
     __inline_elements = ["!doctype", "img", "input"]
 
     def __init__(self, template: str) -> None:
@@ -18,7 +17,6 @@ class Dompa(QueryEngine):
         self.__create_ir_nodes()
         self.__join_ir_nodes()
         self.__create_nodes()
-        super().__init__(self.__nodes)
 
     def __create_ir_nodes(self) -> None:
         tag_start = None
@@ -241,6 +239,34 @@ class Dompa(QueryEngine):
 
     def html(self) -> str:
         return self.__recur_to_html(self.__nodes)
+
+    def find(self, callback: Callable[[Union[TextNode, Node]], bool]) -> list[Union[TextNode, Node]]:
+        return self.__recur_find(self.__nodes, callback)
+
+    def __recur_find(self, nodes: list[Union[TextNode, Node]], callback: Callable[[Union[TextNode, Node]], bool]) -> list[Union[TextNode, Node]]:
+        found_nodes = []
+
+        for node in nodes:
+            if isinstance(node, Node):
+                if len(node.children) == 0 and callback(node):
+                    found_nodes.append(node)
+                    continue
+
+                if len(node.children) != 0:
+                    found_nodes.extend(self.__recur_find(node.children, callback))
+
+        return found_nodes
+
+    def update(self, callback: Callable[[Union[TextNode, Node]], None]) -> None:
+        self.__recur_update(self.__nodes, callback)
+
+    def __recur_update(self, nodes: list[Union[TextNode, Node]], callback: Callable[[Union[TextNode, Node]], None]) -> None:
+        for node in nodes:
+            if isinstance(node, Node):
+                callback(node)
+
+                if len(node.children) != 0:
+                    self.__recur_update(node.children, callback)
 
     def __recur_to_html(self, nodes: list[Union[TextNode, Node]]) -> str:
         html = ""
