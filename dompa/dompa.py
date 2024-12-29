@@ -1,31 +1,6 @@
 from __future__ import annotations
 from typing import Dict, Any, Tuple, Callable, Optional, Union
-
-class TextNode:
-    value: str
-
-    def __init__(self, value: str) -> None:
-        self.value = value
-
-class Node:
-    name: str
-    attributes: Dict[str, str]
-    children: list[Union[TextNode, Node]]
-
-    def __init__(self, name: str, attributes: Dict[str, str], children: list[Union[TextNode, Node]]) -> None:
-        self.name = name
-        self.attributes = attributes
-        self.children = children
-
-
-class IRNode:
-    name: str
-    coords: Tuple[int, int]
-    children: list[Union[IRNode, str]]
-
-    def __init__(self, name: str, coords: Tuple[int, int]) -> None:
-        self.name = name
-        self.coords = coords
+from .nodes import IRNode, TextNode, Node
 
 
 class Dompa:
@@ -294,5 +269,3 @@ class Dompa:
                 attr_str += f"{key}=\"{value}\" "
 
         return attr_str.strip()
-
-print(Dompa("<!DOCTYPE html><div>hello<img src=\"img.jpg\"><input type=\"radio\" checked></div>").to_html())
