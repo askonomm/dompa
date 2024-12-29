@@ -180,19 +180,15 @@ class Dompa:
         node_str = self.__template[coords[0]:coords[1]]
         attr_str_start = None
         attr_str_end = None
-        iter_in_tag = False
 
         # parse the coords for the attribute str
         for idx, char in enumerate(node_str):
-            if char == "<":
-                iter_in_tag = True
-
             # stop whenever the tag ends
-            if attr_str_start and char == ">":
+            if char == ">":
                 attr_str_end = idx
                 break
 
-            if iter_in_tag and attr_str_start is None and char == " ":
+            if attr_str_start is None and char == " ":
                 attr_str_start = idx + 1
 
         if attr_str_start is None or attr_str_end is None:
@@ -208,7 +204,18 @@ class Dompa:
             # it means we're not in an attr value, in which case a
             # space would be part of the value, but rather ending an attribute
             # declaration and moving onto the next one.
-            if (char == " " or idx == len(attr_str) - 1) and iter_attr_value is not None and iter_attr_value[-1] == '"':
+            if char == " " and iter_attr_value is not None and iter_attr_value[-1] == '"':
+                if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
+                    iter_attr_value = iter_attr_value[1:-1]
+
+                attributes[f"{iter_attr_name}{char}".strip()] = iter_attr_value
+                iter_attr_name = ""
+                iter_attr_value = None
+                continue
+
+            if idx == len(attr_str) - 1 and iter_attr_value is not None:
+                iter_attr_value += char
+
                 if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
                     iter_attr_value = iter_attr_value[1:-1]
 
@@ -239,4 +246,4 @@ class Dompa:
     def toHtml(self):
         pass
 
-Dompa("<div someattr=\"value\" otherattr>hello</div>").toHtml()
+Dompa("<div>hello<img src=\"img.jpg\"></div>").toHtml()
