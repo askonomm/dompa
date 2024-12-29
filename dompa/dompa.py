@@ -33,7 +33,7 @@ class Dompa:
     __ir_nodes: list[IRNode]
     __nodes: list[Union[TextNode, Node]]
     __block_elements = ["html", "head", "body", "div", "span", "a"]
-    __inline_elements = ["!doctype", "img"]
+    __inline_elements = ["!doctype", "img", "input"]
 
     def __init__(self, template: str):
         self.__template = template
@@ -207,7 +207,7 @@ class Dompa:
                 if iter_attr_value[0] == '"' and iter_attr_value[-1] == '"':
                     iter_attr_value = iter_attr_value[1:-1]
 
-                attributes[f"{iter_attr_name}{char}".strip()] = iter_attr_value
+                attributes[iter_attr_name.strip()] = iter_attr_value
                 iter_attr_name = ""
                 iter_attr_value = None
                 continue
@@ -269,14 +269,27 @@ class Dompa:
             if isinstance(node, TextNode):
                 html += node.value
             else:
-                if node.name.lower() in self.__block_elements:
+                if node.attributes != {}:
+                    html += f"<{node.name} {self.__node_attrs_from_dict(node.attributes)}>"
+                else:
                     html += f"<{node.name}>"
+
+                if node.name.lower() in self.__block_elements:
                     html += self.__recur_to_html(node.children)
                     html += f"</{node.name}>"
 
-                if node.name.lower() in self.__inline_elements:
-                    html += f"<{node.name}>"
-
         return html
 
-print(Dompa("<!DOCTYPE html><div>hello<img src=\"img.jpg\"></div>").to_html())
+    @staticmethod
+    def __node_attrs_from_dict(attributes: dict[str, str]) -> str:
+        attr_str = ""
+
+        for key, value in attributes.items():
+            if value is True:
+                attr_str += f"{key} "
+            else:
+                attr_str += f"{key}=\"{value}\" "
+
+        return attr_str.strip()
+
+print(Dompa("<!DOCTYPE html><div>hello<img src=\"img.jpg\"><input type=\"radio\" checked></div>").to_html())
