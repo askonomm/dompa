@@ -57,11 +57,11 @@ from dompa.nodes import Node, TextNode
 
 dom = Dompa("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>")
 
-def update_title(item: Node) -> Optional[Node]:
-    if item.name == "h1":
-        item.children = [TextNode(value="New Title")]
+def update_title(node: Node) -> Optional[Node]:
+    if node.name == "h1":
+        node.children = [TextNode(value="New Title")]
         
-    return item
+    return node
 
 dom.update(update_title)
 ```
