@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import copy
-from typing import Dict, Any, Tuple, Callable, Optional, Union
+from typing import Dict, Any, Tuple, Callable, Optional
 from .nodes import IrNode, TextNode, Node
 
 
 class Dompa:
     __template: str
     __ir_nodes: list[IrNode]
-    __nodes: list[Union[TextNode, Node]]
+    __nodes: list[Node]
     __block_elements = [
         "html",
         "head",
@@ -137,10 +137,10 @@ class Dompa:
 
         return None
 
-    def __create_nodes(self):
+    def __create_nodes(self) -> None:
         self.__nodes = self.__recur_create_nodes(self.__ir_nodes)
 
-    def __recur_create_nodes(self, ir_nodes: list[IrNode]) -> list[Union[TextNode, Node]]:
+    def __recur_create_nodes(self, ir_nodes: list[IrNode]) -> list[Node]:
         nodes = []
 
         for ir_node in ir_nodes:
@@ -153,7 +153,7 @@ class Dompa:
 
         return nodes
 
-    def __ir_node_to_node(self, ir_node: IrNode) -> Union[TextNode, Node]:
+    def __ir_node_to_node(self, ir_node: IrNode) -> Node:
         if ir_node.name == "text":
             return TextNode(
                 value=self.__template[ir_node.coords[0] : ir_node.coords[1]],
@@ -249,24 +249,20 @@ class Dompa:
 
         return node_str[attr_str_start:attr_str_end]
 
-    def nodes(self) -> list[Union[TextNode, Node]]:
+    def nodes(self) -> list[Node]:
         return self.__nodes
 
     def html(self) -> str:
         return self.__recur_to_html(self.__nodes)
 
-    def find(
-        self, callback: Callable[[Union[TextNode, Node]], bool]
-    ) -> list[Union[TextNode, Node]]:
+    def find(self, callback: Callable[[Node], bool]) -> list[Node]:
         return copy.deepcopy(self.__recur_find(self.__nodes, callback))
 
-    def __recur_find(
-        self, nodes: list[Union[TextNode, Node]], callback: Callable[[Union[TextNode, Node]], bool]
-    ) -> list[Union[TextNode, Node]]:
+    def __recur_find(self, nodes: list[Node], callback: Callable[[Node], bool]) -> list[Node]:
         found_nodes = []
 
         for node in nodes:
-            if isinstance(node, Node):
+            if not isinstance(node, TextNode):
                 if len(node.children) == 0 and callback(node):
                     found_nodes.append(node)
                     continue
@@ -279,9 +275,7 @@ class Dompa:
     def update(self, callback: Callable[[Node], Optional[Node]]) -> None:
         self.__nodes = self.__recur_update(self.__nodes, callback)
 
-    def __recur_update(
-        self, nodes: list[Union[TextNode, Node]], callback: Callable[[Node], Optional[Node]]
-    ) -> list[Union[TextNode, Node]]:
+    def __recur_update(self, nodes: list[Node], callback: Callable[[Node], Optional[Node]]) -> list[Node]:
         updated_nodes = []
 
         for node in nodes:
@@ -299,7 +293,7 @@ class Dompa:
 
         return updated_nodes
 
-    def __recur_to_html(self, nodes: list[Union[TextNode, Node]]) -> str:
+    def __recur_to_html(self, nodes: list[Node]) -> str:
         html = ""
 
         for node in nodes:
