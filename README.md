@@ -43,32 +43,27 @@ dom = Dompa("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>")
 list_items = dom.find(lambda n: n.name == "li")
 ```
 
+All nodes returned with `find` are deep copies, so mutating them has no effect on Dompa's state.
+
 ### `update`
 
-You can update nodes with the `update` method which takes a `Callable` that gets a `Node` passed to it, like so:
+You can update nodes with the `update` method which takes a `Callable` that gets a `Node` passed to it, and has to 
+return the updated node, like so:
 
 ```python
+from typing import Optional
 from dompa import Dompa
 from dompa.nodes import Node, TextNode
 
 dom = Dompa("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>")
 
-def update_title(item: Node) -> None:
+def update_title(item: Node) -> Optional[Node]:
     if item.name == "h1":
         item.children = [TextNode(value="New Title")]
+        
+    return item
 
 dom.update(update_title)
 ```
 
-### `remove`
-
-Not implemented yet.
-
-### `add_before`
-
-Not implemented yet.
-
-### `add_after`
-
-Not implemented yet.
-
+If you wish to remove a node then return `None` instead of the node.

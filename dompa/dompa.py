@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import copy
 from typing import Dict, Any, Tuple, Callable, Optional, Union
 from .nodes import IrNode, TextNode, Node
 
@@ -7,7 +9,20 @@ class Dompa:
     __template: str
     __ir_nodes: list[IrNode]
     __nodes: list[Union[TextNode, Node]]
-    __block_elements = ["html", "head", "body", "div", "span", "a", "h1", "h2", "h3", "h4", "h5", "h6"]
+    __block_elements = [
+        "html",
+        "head",
+        "body",
+        "div",
+        "span",
+        "a",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+    ]
     __inline_elements = ["!doctype", "img", "input"]
 
     def __init__(self, template: str) -> None:
@@ -141,13 +156,13 @@ class Dompa:
     def __ir_node_to_node(self, ir_node: IrNode) -> Union[TextNode, Node]:
         if ir_node.name == "text":
             return TextNode(
-                value=self.__template[ir_node.coords[0]:ir_node.coords[1]],
+                value=self.__template[ir_node.coords[0] : ir_node.coords[1]],
             )
 
         return Node(
             name=ir_node.name,
             attributes=self.__node_attributes_from_coords(ir_node.coords),
-            children=[]
+            children=[],
         )
 
     def __node_attributes_from_coords(self, coords: Tuple[int, int]) -> Dict[str, str]:
@@ -215,7 +230,7 @@ class Dompa:
         return attributes
 
     def __node_attr_str_from_coords(self, coords: Tuple[int, int]) -> Optional[str]:
-        node_str = self.__template[coords[0]:coords[1]]
+        node_str = self.__template[coords[0] : coords[1]]
         attr_str_start = None
         attr_str_end = None
 
@@ -240,10 +255,14 @@ class Dompa:
     def html(self) -> str:
         return self.__recur_to_html(self.__nodes)
 
-    def find(self, callback: Callable[[Union[TextNode, Node]], bool]) -> list[Union[TextNode, Node]]:
-        return self.__recur_find(self.__nodes, callback)
+    def find(
+        self, callback: Callable[[Union[TextNode, Node]], bool]
+    ) -> list[Union[TextNode, Node]]:
+        return copy.deepcopy(self.__recur_find(self.__nodes, callback))
 
-    def __recur_find(self, nodes: list[Union[TextNode, Node]], callback: Callable[[Union[TextNode, Node]], bool]) -> list[Union[TextNode, Node]]:
+    def __recur_find(
+        self, nodes: list[Union[TextNode, Node]], callback: Callable[[Union[TextNode, Node]], bool]
+    ) -> list[Union[TextNode, Node]]:
         found_nodes = []
 
         for node in nodes:
@@ -257,16 +276,28 @@ class Dompa:
 
         return found_nodes
 
-    def update(self, callback: Callable[[Union[TextNode, Node]], None]) -> None:
-        self.__recur_update(self.__nodes, callback)
+    def update(self, callback: Callable[[Node], Optional[Node]]) -> None:
+        self.__nodes = self.__recur_update(self.__nodes, callback)
 
-    def __recur_update(self, nodes: list[Union[TextNode, Node]], callback: Callable[[Union[TextNode, Node]], None]) -> None:
+    def __recur_update(
+        self, nodes: list[Union[TextNode, Node]], callback: Callable[[Node], Optional[Node]]
+    ) -> list[Union[TextNode, Node]]:
+        updated_nodes = []
+
         for node in nodes:
-            if isinstance(node, Node):
-                callback(node)
+            if isinstance(node, TextNode):
+                updated_nodes.append(node)
+                continue
 
-                if len(node.children) != 0:
-                    self.__recur_update(node.children, callback)
+            updated_node = callback(node)
+
+            if updated_node is None:
+                continue
+
+            updated_node.children = self.__recur_update(updated_node.children, callback)
+            updated_nodes.append(updated_node)
+
+        return updated_nodes
 
     def __recur_to_html(self, nodes: list[Union[TextNode, Node]]) -> str:
         html = ""
@@ -294,6 +325,6 @@ class Dompa:
             if value is True:
                 attr_str += f"{key} "
             else:
-                attr_str += f"{key}=\"{value}\" "
+                attr_str += f'{key}="{value}" '
 
         return attr_str.strip()
