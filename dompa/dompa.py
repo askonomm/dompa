@@ -1,14 +1,14 @@
 from __future__ import annotations
 import copy
 from typing import Dict, Any, Tuple, Callable, Optional, Union
-from .nodes import IrNode, TextNode, Node
+from .nodes import IrNode, TextNode, BlockNode, InlineNode, Node
 
 
 class Dompa:
     __template: str
     __ir_nodes: list[IrNode]
     __nodes: list[Node]
-    __block_elements = [
+    __block_names = [
         "html",
         "head",
         "body",
@@ -22,7 +22,7 @@ class Dompa:
         "h5",
         "h6",
     ]
-    __inline_elements = ["!doctype", "img", "input"]
+    __inline_names = ["!doctype", "img", "input"]
 
     def __init__(self, template: str) -> None:
         self.__template = template
@@ -59,10 +59,10 @@ class Dompa:
 
                 name = tag[1:-1].split(" ")[0].strip()
 
-                if name.lower() in self.__block_elements:
+                if name.lower() in self.__block_names:
                     self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, 0)))
 
-                if name.lower() in self.__inline_elements:
+                if name.lower() in self.__inline_names:
                     self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, tag_end)))
 
                 tag_start = None
@@ -73,7 +73,7 @@ class Dompa:
                 text_start = idx
 
             if text_start is not None and text_end is not None:
-                self.__ir_nodes.append(IrNode(name="text", coords=(text_start, text_end)))
+                self.__ir_nodes.append(IrNode(name="_text_node", coords=(text_start, text_end)))
 
                 text_start = None
                 text_end = None
@@ -89,31 +89,30 @@ class Dompa:
 
     def __join_ir_nodes(self):
         set_coords = set()
+        self.__ir_nodes = self.__recur_join_ir_nodes(self.__ir_nodes, set_coords)
 
-        for node in self.__ir_nodes:
-            if node.coords in set_coords:
-                continue
+    def __recur_join_ir_nodes(self, nodes: list[IrNode], set_coords: set):
+        """
 
-            nodes_within = self.__find_ir_nodes_in_coords(node.coords)
-            node.children = self.__recur_ir_node_children(nodes_within, set_coords)
-
-        self.__ir_nodes = [node for node in self.__ir_nodes if node.coords not in set_coords]
-
-    def __recur_ir_node_children(self, nodes: list[Tuple[int, IrNode]], set_coords: set):
+        """
         children = []
 
-        for idx, child_node in nodes:
+        for child_node in nodes:
             if child_node.coords in set_coords:
                 continue
 
             set_coords.add(child_node.coords)
-            child_node_children = self.__find_ir_nodes_in_coords(child_node.coords)
-            child_node.children = self.__recur_ir_node_children(child_node_children, set_coords)
+            child_node_list = self.__find_ir_nodes_in_coords(child_node.coords)
+            child_node_nodes = [item[1] for item in child_node_list]
+            child_node.children = self.__recur_join_ir_nodes(child_node_nodes, set_coords)
             children.append(child_node)
 
         return children
 
     def __find_ir_nodes_in_coords(self, coords: Tuple[int, int]) -> list[Tuple[int, IrNode]]:
+        """
+        Finds all `IrNode`'s that are within given `coords`.
+        """
         ir_block_nodes = []
         [start, end] = coords
 
@@ -125,7 +124,11 @@ class Dompa:
 
         return ir_block_nodes
 
-    def __find_last_ir_node(self, condition: Callable[[Any], bool]) -> Optional[Tuple[int, Any]]:
+    def __find_last_ir_node(self, condition: Callable[[Any], bool]) -> Optional[Tuple[int, IrNode]]:
+        """
+        Iterates over list of `IrNode`'s in reverse and returns the first one that matches the
+        given `condition`, or `None` if no match was found.
+        """
         idx = len(self.__ir_nodes)
 
         for item in reversed(self.__ir_nodes):
@@ -137,9 +140,16 @@ class Dompa:
         return None
 
     def __create_nodes(self) -> None:
+        """
+        Transforms `IrNode`'s to `Node`'s.
+        """
         self.__nodes = self.__recur_create_nodes(self.__ir_nodes)
 
     def __recur_create_nodes(self, ir_nodes: list[IrNode]) -> list[Node]:
+        """
+        Recursively iterates over a list of `IrNode`'s and transforms them
+        to a tree of `Node`'s.
+        """
         nodes = []
 
         for ir_node in ir_nodes:
@@ -153,9 +163,29 @@ class Dompa:
         return nodes
 
     def __ir_node_to_node(self, ir_node: IrNode) -> Node:
-        if ir_node.name == "text":
+        """
+        Transform a `IrNode` to a `Node`. If the `IrNode`'s name is `_text_node`,
+        it will create a `TextNode` instance. If the `IrNode`'s name is within the
+        `__block_names` list, it will create a `BlockNode`, and if within `__inline_names`
+        list, it will create a `InlineNode`. In any other case, a generic `Node` will be
+        created.
+        """
+        if ir_node.name == "_text_node":
             return TextNode(
                 value=self.__template[ir_node.coords[0] : ir_node.coords[1]],
+            )
+
+        if ir_node.name in self.__block_names:
+            return BlockNode(
+                name=ir_node.name,
+                attributes=self.__node_attributes_from_coords(ir_node.coords),
+                children=[],
+            )
+
+        if ir_node.name in self.__inline_names:
+            return InlineNode(
+                name=ir_node.name,
+                attributes=self.__node_attributes_from_coords(ir_node.coords),
             )
 
         return Node(
@@ -164,7 +194,10 @@ class Dompa:
             children=[],
         )
 
-    def __node_attributes_from_coords(self, coords: Tuple[int, int]) -> Dict[str, str]:
+    def __node_attributes_from_coords(self, coords: Tuple[int, int]) -> Dict[str, Union[str, bool]]:
+        """
+        Composes a dictionary of node attributes from the tag located at `coords`.
+        """
         attributes = {}
         attr_str = self.__node_attr_str_from_coords(coords)
 
@@ -229,6 +262,11 @@ class Dompa:
         return attributes
 
     def __node_attr_str_from_coords(self, coords: Tuple[int, int]) -> Optional[str]:
+        """
+        Parses the attribute string from given `coords`. The `coords` point to an entire
+        tag, which could have child tags, so this only gets the attribute str from the first
+        tag, or none at all.
+        """
         node_str = self.__template[coords[0] : coords[1]]
         attr_str_start = None
         attr_str_end = None
@@ -334,7 +372,7 @@ class Dompa:
                 else:
                     html += f"<{node.name}>"
 
-                if node.name.lower() in self.__block_elements:
+                if isinstance(node, BlockNode):
                     html += self.__recur_to_html(node.children)
                     html += f"</{node.name}>"
 
