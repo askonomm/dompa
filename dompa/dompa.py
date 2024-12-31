@@ -1,7 +1,6 @@
 from __future__ import annotations
-
 import copy
-from typing import Dict, Any, Tuple, Callable, Optional
+from typing import Dict, Any, Tuple, Callable, Optional, Union
 from .nodes import IrNode, TextNode, Node
 
 
@@ -250,33 +249,54 @@ class Dompa:
         return node_str[attr_str_start:attr_str_end]
 
     def nodes(self) -> list[Node]:
+        """
+        Return the entire node tree.
+        """
         return self.__nodes
 
-    def html(self) -> str:
-        return self.__recur_to_html(self.__nodes)
+    def query(self, callback: Callable[[Node], bool]) -> list[Node]:
+        """
+        Find all nodes that pass the truth check of the `callback` function.
+        """
+        return copy.deepcopy(self.__recur_query(self.__nodes, callback))
 
-    def find(self, callback: Callable[[Node], bool]) -> list[Node]:
-        return copy.deepcopy(self.__recur_find(self.__nodes, callback))
-
-    def __recur_find(self, nodes: list[Node], callback: Callable[[Node], bool]) -> list[Node]:
-        found_nodes = []
+    def __recur_query(self, nodes: list[Node], callback: Callable[[Node], bool]) -> list[Node]:
+        """
+        Recursively iterates over the node tree and returns nodes based on the `callback`
+        function which receives a iteration `Node` as a parameter, and must be return a
+        boolean `true` or `false`.
+        """
+        found_nodes: list[Node] = []
 
         for node in nodes:
-            if not isinstance(node, TextNode):
+            if isinstance(node, TextNode):
+                found_nodes.append(node)
+            else:
                 if len(node.children) == 0 and callback(node):
                     found_nodes.append(node)
                     continue
 
                 if len(node.children) != 0:
-                    found_nodes.extend(self.__recur_find(node.children, callback))
+                    found_nodes.extend(self.__recur_query(node.children, callback))
 
         return found_nodes
 
-    def update(self, callback: Callable[[Node], Optional[Node]]) -> None:
-        self.__nodes = self.__recur_update(self.__nodes, callback)
+    def traverse(self, callback: Callable[[Node], Optional[Node]]) -> None:
+        """
+        Traverses the node tree, node by node, passing each node to the `callback`
+        function. The `callback` function must always return either a `Node` or
+        `None`, latter in the case of removal.
+        """
+        self.__nodes = self.__recur_traverse(self.__nodes, callback)
 
-    def __recur_update(self, nodes: list[Node], callback: Callable[[Node], Optional[Node]]) -> list[Node]:
-        updated_nodes = []
+    def __recur_traverse(self, nodes: list[Node], callback: Callable[[Node], Optional[Node]]) -> list[Node]:
+        """
+        Recursively iterates over the node tree and updates nodes based on the `callback`
+        function. If the `callback` function returns a `Node`, then the `Node` in the
+        iteration will be replaced, and if the `callback` function returns `None`, then
+        the `Node` in the iteration will be removed.
+        """
+        updated_nodes: list[Node] = []
 
         for node in nodes:
             if isinstance(node, TextNode):
@@ -288,12 +308,21 @@ class Dompa:
             if updated_node is None:
                 continue
 
-            updated_node.children = self.__recur_update(updated_node.children, callback)
+            updated_node.children = self.__recur_traverse(updated_node.children, callback)
             updated_nodes.append(updated_node)
 
         return updated_nodes
 
+    def html(self) -> str:
+        """
+        Transform the node tree into a HTML string.
+        """
+        return self.__recur_to_html(self.__nodes)
+
     def __recur_to_html(self, nodes: list[Node]) -> str:
+        """
+        Recursively iterates over the node tree to compose a HTML string output.
+        """
         html = ""
 
         for node in nodes:
@@ -312,7 +341,10 @@ class Dompa:
         return html
 
     @staticmethod
-    def __node_attrs_from_dict(attributes: dict[str, str]) -> str:
+    def __node_attrs_from_dict(attributes: dict[str, Union[str, bool]]) -> str:
+        """
+        Composes a HTML attribute string for a node from its attributes dictionary.
+        """
         attr_str = ""
 
         for key, value in attributes.items():
