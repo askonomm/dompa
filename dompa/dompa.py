@@ -8,7 +8,22 @@ class Dompa:
     __template: str
     __ir_nodes: list[IrNode]
     __nodes: list[Node]
-    __void_names = ["!doctype", "img", "input"]
+    __void_names = [
+        "!doctype",
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "source",
+        "track",
+        "wbr"
+    ]
 
     def __init__(self, template: str) -> None:
         self.__template = template
@@ -23,7 +38,7 @@ class Dompa:
         Parses the given template string into a flat list of `IrNode`s,
         a "intermediate representation" nodes that contain the raw info
         required to later on turn it into a nested tree with proper
-        data. 
+        data.
         """
         tag_start = None
         tag_end = None
@@ -175,7 +190,7 @@ class Dompa:
                 value=self.__template[ir_node.coords[0] : ir_node.coords[1]],
             )
 
-        if ir_node.name in self.__void_names:
+        if ir_node.name.lower() in self.__void_names:
             return VoidNode(
                 name=ir_node.name,
                 attributes=self.__node_attributes_from_coords(ir_node.coords),
