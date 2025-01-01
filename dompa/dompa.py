@@ -315,15 +315,12 @@ class Dompa:
         found_nodes: list[Node] = []
 
         for node in nodes:
-            if isinstance(node, TextNode):
+            if callback(node):
                 found_nodes.append(node)
-            else:
-                if len(node.children) == 0 and callback(node):
-                    found_nodes.append(node)
-                    continue
+                continue
 
-                if len(node.children) != 0:
-                    found_nodes.extend(self.__recur_query(node.children, callback))
+            if len(node.children) != 0:
+                found_nodes.extend(self.__recur_query(node.children, callback))
 
         return found_nodes
 
