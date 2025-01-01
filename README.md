@@ -104,7 +104,7 @@ would not have any children in it.
 ```python
 from dompa.nodes import VoidNode
 
-VoidNode(name="name-goes-here", attributes={}, children=[])
+VoidNode(name="name-goes-here", attributes={})
 ```
 
 Would render:
