@@ -73,3 +73,61 @@ dom.traverse(update_title)
 ```
 
 If you wish to remove a node then return `None` instead of the node.
+
+## Types of nodes
+
+There are three types of nodes that you can use in Dompa to manipulate the node tree.
+
+### `Node`
+
+The most common node is just `Node`. You should use this if you want the node to potentially have any children inside of
+it.
+
+```python
+from dompa.nodes import Node
+
+Node(name="name-goes-here", attributes={}, children=[])
+```
+
+Would render:
+
+```html
+<name-goes-here></name-goes-here>
+```
+
+### `VoidNode`
+
+A void node (or _Void Element_ according
+to [the HTML standard](https://html.spec.whatwg.org/multipage/syntax.html#void-elements)) is self-closing, meaning you
+would not have any children in it.
+
+```python
+from dompa.nodes import VoidNode
+
+VoidNode(name="name-goes-here", attributes={}, children=[])
+```
+
+Would render:
+
+```html
+<name-goes-here>
+```
+
+You would use this to create things like `img`, `input`, `br` and so forth, but of course you can also create custom
+elements. Dompa does not enforce the use of any known names.
+
+### `TextNode`
+
+A text node is just for rendering text. It has no tag of its own, it cannot have any attributes and no children.
+
+```python
+from dompa.nodes import TextNode
+
+TextNode(value="Hello, World!")
+```
+
+Would render:
+
+```html
+Hello, World!
+```
