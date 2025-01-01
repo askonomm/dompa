@@ -1,5 +1,5 @@
 from .node import Node
 
 
-class InlineNode(Node):
+class VoidNode(Node):
     pass

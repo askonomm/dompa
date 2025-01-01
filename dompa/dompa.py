@@ -1,28 +1,14 @@
 from __future__ import annotations
 import copy
 from typing import Dict, Any, Tuple, Callable, Optional, Union
-from .nodes import IrNode, TextNode, BlockNode, InlineNode, Node
+from .nodes import IrNode, TextNode, VoidNode, Node
 
 
 class Dompa:
     __template: str
     __ir_nodes: list[IrNode]
     __nodes: list[Node]
-    __block_names = [
-        "html",
-        "head",
-        "body",
-        "div",
-        "span",
-        "a",
-        "h1",
-        "h2",
-        "h3",
-        "h4",
-        "h5",
-        "h6",
-    ]
-    __inline_names = ["!doctype", "img", "input"]
+    __void_names = ["!doctype", "img", "input"]
 
     def __init__(self, template: str) -> None:
         self.__template = template
@@ -33,6 +19,12 @@ class Dompa:
         self.__create_nodes()
 
     def __create_ir_nodes(self) -> None:
+        """
+        Parses the given template string into a flat list of `IrNode`s,
+        a "intermediate representation" nodes that contain the raw info
+        required to later on turn it into a nested tree with proper
+        data. 
+        """
         tag_start = None
         tag_end = None
         text_start = None
@@ -59,11 +51,10 @@ class Dompa:
 
                 name = tag[1:-1].split(" ")[0].strip()
 
-                if name.lower() in self.__block_names:
-                    self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, 0)))
-
-                if name.lower() in self.__inline_names:
+                if name.lower() in self.__void_names:
                     self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, tag_end)))
+                else:
+                    self.__ir_nodes.append(IrNode(name=name, coords=(tag_start, 0)))
 
                 tag_start = None
                 tag_end = None
@@ -78,22 +69,32 @@ class Dompa:
                 text_start = None
                 text_end = None
 
-    def __maybe_close_ir_node(self, tag: str, coord: int):
+    def __maybe_close_ir_node(self, tag: str, coord: int) -> None:
+        """
+        If there's a `IrNode` with a name matching the previous one where its
+        end coord is 0, it means this coord is actually the ending of that one,
+        and thus we update its end coord, effectively "closing" it.
+        """
         el_name = tag[2:-1].split(" ")[0].strip()
         match = self.__find_last_ir_node(lambda node: node.name == el_name)
 
-        if match is not None:
+        if match is not None and match[1].coords[1] == 0:
             [idx, last_ir_pos_node] = match
             last_ir_pos_node.coords = (last_ir_pos_node.coords[0], coord)
             self.__ir_nodes[idx] = last_ir_pos_node
 
-    def __join_ir_nodes(self):
+    def __join_ir_nodes(self) -> None:
+        """
+        Joins the `IrNode`'s together based on their `coords`.
+        """
         set_coords = set()
         self.__ir_nodes = self.__recur_join_ir_nodes(self.__ir_nodes, set_coords)
 
-    def __recur_join_ir_nodes(self, nodes: list[IrNode], set_coords: set):
+    def __recur_join_ir_nodes(self, nodes: list[IrNode], set_coords: set) -> list[IrNode]:
         """
-
+        Recursively iterates over `IrNode`'s and joins them together based on their
+        `coords`. Meaning that nodes within other nodes become their children,
+        and so forth.
         """
         children = []
 
@@ -166,24 +167,16 @@ class Dompa:
         """
         Transform a `IrNode` to a `Node`. If the `IrNode`'s name is `_text_node`,
         it will create a `TextNode` instance. If the `IrNode`'s name is within the
-        `__block_names` list, it will create a `BlockNode`, and if within `__inline_names`
-        list, it will create a `InlineNode`. In any other case, a generic `Node` will be
-        created.
+        `__void_names` list, it will create a `VoidNode`. In any other case, a
+        generic `Node` will be created.
         """
         if ir_node.name == "_text_node":
             return TextNode(
                 value=self.__template[ir_node.coords[0] : ir_node.coords[1]],
             )
 
-        if ir_node.name in self.__block_names:
-            return BlockNode(
-                name=ir_node.name,
-                attributes=self.__node_attributes_from_coords(ir_node.coords),
-                children=[],
-            )
-
-        if ir_node.name in self.__inline_names:
-            return InlineNode(
+        if ir_node.name in self.__void_names:
+            return VoidNode(
                 name=ir_node.name,
                 attributes=self.__node_attributes_from_coords(ir_node.coords),
             )
@@ -372,7 +365,7 @@ class Dompa:
                 else:
                     html += f"<{node.name}>"
 
-                if isinstance(node, BlockNode):
+                if not isinstance(node, VoidNode):
                     html += self.__recur_to_html(node.children)
                     html += f"</{node.name}>"
 
