@@ -45,16 +45,24 @@ class Dompa:
         text_start = None
         text_end = None
 
-        for idx, part in enumerate(self.__template):
-            if part == "<":
+        for idx, char in enumerate(self.__template):
+            # start of a tag, or perhaps end of a text node
+            if char == "<":
                 if text_start is not None:
                     text_end = idx
 
                 tag_start = idx
 
-            if part == ">":
+            # last char, but not end of tag, means we're
+            # in a text node
+            if len(self.__template) - 1 == idx and char != ">":
+                text_end = idx + 1
+
+            # end of a tag
+            if char == ">":
                 tag_end = idx + 1
 
+            # when we have all tag collection data, lets collect it
             if tag_start is not None and tag_end is not None:
                 tag = self.__template[tag_start:tag_end]
 
@@ -75,9 +83,12 @@ class Dompa:
                 tag_end = None
                 continue
 
+            # no tag collection data, and no `text_start` means we start
+            # collecting text data
             if tag_start is None and tag_end is None and text_start is None:
                 text_start = idx
 
+            # when we have all text collection data, lets collect it
             if text_start is not None and text_end is not None:
                 self.__ir_nodes.append(IrNode(name="_text_node", coords=(text_start, text_end)))
 

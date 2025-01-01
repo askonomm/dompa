@@ -32,6 +32,13 @@ def test_html_equality4():
     assert dom.html() == html
 
 
+def test_html_equality5():
+    html = 'Hello, World!'
+    dom = Dompa(html)
+
+    assert dom.html() == "Hello, World!"
+
+
 def test_invalid_html():
     html = '<div><p>Hello</p>'
     dom = Dompa(html)
