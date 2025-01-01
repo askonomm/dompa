@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import Dict, Any, Tuple, Callable, Optional, Union
+from typing import Any, Tuple, Callable, Optional, Union
 from .nodes import IrNode, TextNode, VoidNode, Node
 
 
@@ -213,7 +213,7 @@ class Dompa:
             children=[],
         )
 
-    def __node_attributes_from_coords(self, coords: Tuple[int, int]) -> Dict[str, Union[str, bool]]:
+    def __node_attributes_from_coords(self, coords: Tuple[int, int]) -> dict[str, Union[str, bool]]:
         """
         Composes a dictionary of node attributes from the tag located at `coords`.
         """
