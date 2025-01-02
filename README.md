@@ -138,6 +138,7 @@ A fragment node is a node whose children will replace itself. It is sort of a tr
 
 ```python
 from dompa.nodes import TextNode, FragmentNode, Node
+
 FragmentNode(children=[
     Node(name="h2", children=[TextNode(value="Hello, World!")]),
     Node(name="p", children=[TextNode(value="Some content ...")])
