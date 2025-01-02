@@ -1,6 +1,6 @@
 from __future__ import annotations
 import copy
-from typing import Any, Tuple, Callable, Optional, Union
+from typing import Any, Tuple, Callable, Optional, Union, Set
 from .nodes import IrNode, TextNode, VoidNode, Node, FragmentNode
 
 
@@ -113,7 +113,7 @@ class Dompa:
         """
         Joins the `IrNode`'s together based on their `coords`.
         """
-        set_coords = set()
+        set_coords: Set[Tuple[int, int]] = set()
         self.__ir_nodes = self.__recur_join_ir_nodes(self.__ir_nodes, set_coords)
 
     def __recur_join_ir_nodes(self, nodes: list[IrNode], set_coords: set) -> list[IrNode]:
@@ -130,7 +130,7 @@ class Dompa:
 
             set_coords.add(child_node.coords)
             child_node_list = self.__find_ir_nodes_in_coords(child_node.coords)
-            child_node_nodes = [item[1] for item in child_node_list]
+            child_node_nodes: list[IrNode] = list([item[1] for item in child_node_list])
             child_node.children = self.__recur_join_ir_nodes(child_node_nodes, set_coords)
             children.append(child_node)
 
@@ -217,7 +217,7 @@ class Dompa:
         """
         Composes a dictionary of node attributes from the tag located at `coords`.
         """
-        attributes = {}
+        attributes: dict[str, Union[str, bool]] = {}
         attr_str = self.__node_attr_str_from_coords(coords)
 
         if attr_str is None:
