@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 from typing import Any, Tuple, Callable, Optional, Union
-from .nodes import IrNode, TextNode, VoidNode, Node
+from .nodes import IrNode, TextNode, VoidNode, Node, FragmentNode
 
 
 class Dompa:
@@ -357,6 +357,10 @@ class Dompa:
                 updated_nodes.append(node)
                 continue
 
+            if isinstance(node, FragmentNode):
+                updated_nodes.extend(self.__recur_traverse(node.children, callback))
+                continue
+
             updated_node = callback(node)
 
             if updated_node is None:
@@ -382,6 +386,8 @@ class Dompa:
         for node in nodes:
             if isinstance(node, TextNode):
                 html += node.value
+            elif isinstance(node, FragmentNode):
+                html += self.__recur_to_html(node.children)
             else:
                 if node.attributes != {}:
                     html += f"<{node.name} {self.__node_attrs_from_dict(node.attributes)}>"

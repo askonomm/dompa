@@ -2,6 +2,7 @@ from typing import Optional
 
 from dompa import Dompa
 from dompa.nodes import TextNode, Node
+from dompa.nodes.fragment_node import FragmentNode
 
 
 def test_html_equality():
@@ -80,6 +81,28 @@ def test_query():
     assert isinstance(result[0].children[0], TextNode)
 
 
+def test_query_fragment_node():
+    html = '<div><h1>Title</h1></div>'
+    dom = Dompa(html)
+
+    def replace_title(node: Node) -> Optional[Node]:
+        if node.name == "h1":
+            return FragmentNode(children=[
+                Node(name="h2", children=[TextNode(value="Hello, World!")]),
+                Node(name="p", children=[TextNode(value="Some content ...")])
+            ])
+
+        return node
+
+    dom.traverse(replace_title)
+
+    result = dom.query(lambda x: x.name == "h2")
+
+    assert len(result) == 1
+    assert isinstance(result[0], Node)
+    assert isinstance(result[0].children[0], TextNode)
+
+
 def test_traverse_update_node():
     html = '<div><h1>Title</h1><p>Content</p></div>'
     dom = Dompa(html)
@@ -123,3 +146,21 @@ def test_traverse_remove_node():
     dom.traverse(update_title)
 
     assert dom.html() == "<div><p>Content</p></div>"
+
+
+def test_traverse_fragment_node():
+    html = '<div><h1>Title</h1></div>'
+    dom = Dompa(html)
+
+    def replace_title(node: Node) -> Optional[Node]:
+        if node.name == "h1":
+            return FragmentNode(children=[
+                Node(name="h2", children=[TextNode(value="Hello, World!")]),
+                Node(name="p", children=[TextNode(value="Some content ...")])
+            ])
+
+        return node
+
+    dom.traverse(replace_title)
+
+    assert dom.html() == "<div><h2>Hello, World!</h2><p>Some content ...</p></div>"

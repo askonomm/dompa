@@ -72,7 +72,7 @@ def update_title(node: Node) -> Optional[Node]:
 dom.traverse(update_title)
 ```
 
-If you wish to remove a node then return `None` instead of the node.
+If you wish to remove a node then return `None` instead of the node. If you wish to replace a single node with multiple nodes, use [`FragmentNode`](#fragmentnode).
 
 ## Types of nodes
 
@@ -130,4 +130,23 @@ Would render:
 
 ```html
 Hello, World!
+```
+
+### `FragmentNode`
+
+A fragment node is a node whose children will replace itself. It is sort of a transient node in a sense that it doesn't really exist. You can use it to replace a single node with multiple nodes on the same level inside of the `traverse` method.
+
+```python
+from dompa.nodes import TextNode, FragmentNode, Node
+FragmentNode(children=[
+    Node(name="h2", children=[TextNode(value="Hello, World!")]),
+    Node(name="p", children=[TextNode(value="Some content ...")])
+])
+```
+
+Would render:
+
+```html
+<h2>Hello, World!</h2>
+<p>Some content ...</p>
 ```
