@@ -1,6 +1,7 @@
 from __future__ import annotations
+from typing import Union, Any
 
-from typing import Union, Optional
+from .node_action import NodeAction
 
 
 class Node:
@@ -8,12 +9,10 @@ class Node:
     attributes: dict[str, Union[str, bool]]
     children: list[Node]
 
-    def __init__(
-            self,
-            name: Optional[str] = None,
-            attributes: Optional[dict[str, Union[str, bool]]] = None,
-            children: Optional[list[Node]] = None
-        ) -> None:
-        self.name = name or ""
-        self.attributes = attributes or {}
-        self.children = children or []
+    def __init__(self, **kwargs) -> None:
+        self.name = kwargs.get("name") or ""
+        self.attributes = kwargs.get("attributes") or {}
+        self.children = kwargs.get("children") or []
+
+    def action(self, action: type[NodeAction]) -> Any:
+        return action(self).make()

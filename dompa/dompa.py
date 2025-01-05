@@ -1,13 +1,14 @@
 from __future__ import annotations
 import copy
 from typing import Any, Tuple, Callable, Optional, Union, Set
+from .dompa_action import DompaAction
 from .nodes import IrNode, TextNode, VoidNode, Node, FragmentNode
 
 
 class Dompa:
+    __nodes: list[Node]
     __template: str
     __ir_nodes: list[IrNode]
-    __nodes: list[Node]
     __void_names = [
         "!doctype",
         "area",
@@ -32,6 +33,9 @@ class Dompa:
         self.__create_ir_nodes()
         self.__join_ir_nodes()
         self.__create_nodes()
+
+    def action(self, action: type[DompaAction]) -> Any:
+        return action(self).make()
 
     def __create_ir_nodes(self) -> None:
         """
@@ -305,12 +309,6 @@ class Dompa:
 
         return node_str[attr_str_start:attr_str_end]
 
-    def nodes(self) -> list[Node]:
-        """
-        Return the entire node tree.
-        """
-        return self.__nodes
-
     def query(self, callback: Callable[[Node], bool]) -> list[Node]:
         """
         Find all nodes that pass the truth check of the `callback` function.
@@ -357,13 +355,13 @@ class Dompa:
                 updated_nodes.append(node)
                 continue
 
-            if isinstance(node, FragmentNode):
-                updated_nodes.extend(self.__recur_traverse(node.children, callback))
-                continue
-
             updated_node = callback(node)
 
             if updated_node is None:
+                continue
+
+            if isinstance(updated_node, FragmentNode):
+                updated_nodes.extend(self.__recur_traverse(updated_node.children, callback))
                 continue
 
             updated_node.children = self.__recur_traverse(updated_node.children, callback)
@@ -371,46 +369,5 @@ class Dompa:
 
         return updated_nodes
 
-    def html(self) -> str:
-        """
-        Transform the node tree into a HTML string.
-        """
-        return self.__recur_to_html(self.__nodes)
-
-    def __recur_to_html(self, nodes: list[Node]) -> str:
-        """
-        Recursively iterates over the node tree to compose a HTML string output.
-        """
-        html = ""
-
-        for node in nodes:
-            if isinstance(node, TextNode):
-                html += node.value
-            elif isinstance(node, FragmentNode):
-                html += self.__recur_to_html(node.children)
-            else:
-                if node.attributes != {}:
-                    html += f"<{node.name} {self.__node_attrs_from_dict(node.attributes)}>"
-                else:
-                    html += f"<{node.name}>"
-
-                if not isinstance(node, VoidNode):
-                    html += self.__recur_to_html(node.children)
-                    html += f"</{node.name}>"
-
-        return html
-
-    @staticmethod
-    def __node_attrs_from_dict(attributes: dict[str, Union[str, bool]]) -> str:
-        """
-        Composes a HTML attribute string for a node from its attributes dictionary.
-        """
-        attr_str = ""
-
-        for key, value in attributes.items():
-            if value is True:
-                attr_str += f"{key} "
-            else:
-                attr_str += f'{key}="{value}" '
-
-        return attr_str.strip()
+    def get_nodes(self) -> list[Node]:
+        return self.__nodes

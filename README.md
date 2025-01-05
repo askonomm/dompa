@@ -2,8 +2,7 @@
 
 ![Coverage](https://raw.githubusercontent.com/askonomm/dompa/refs/heads/master/coverage-badge.svg)
 
-A zero-dependency HTML5 document parser. It takes an input of an HTML string, parses it into a node tree,
-and provides an API for querying and manipulating said node tree.
+A zero-dependency HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, and provides an API for querying and manipulating said node tree.
 
 ## Install
 
@@ -19,14 +18,15 @@ The most basic usage looks like this:
 
 ```python
 from dompa import Dompa
+from dompa.actions import ToHtml
 
 dom = Dompa("<div>Hello, World</div>")
 
 # Get the tree of nodes
-nodes = dom.nodes()
+nodes = dom.get_nodes()
 
-# Get the HTML string
-html = dom.html()
+# Turn the node tree into HTML
+html = dom.action(ToHtml)
 ```
 
 ## DOM manipulation
@@ -49,10 +49,7 @@ All nodes returned with `query` are deep copies, so mutating them has no effect 
 
 ### `traverse`
 
-The `traverse` method is very similar to the `query` method, but instead of returning deep copies of data it returns a
-direct reference to data instead, meaning it is ideal for updating the node tree inside of Dompa. It takes a `Callable`
-that gets a `Node` passed to it, and has to
-return the updated node, like so:
+The `traverse` method is very similar to the `query` method, but instead of returning deep copies of data it returns a direct reference to data instead, meaning it is ideal for updating the node tree inside of Dompa. It takes a `Callable` that gets a `Node` passed to it, and has to return the updated node, like so:
 
 ```python
 from typing import Optional
@@ -150,4 +147,67 @@ Would render:
 ```html
 <h2>Hello, World!</h2>
 <p>Some content ...</p>
+```
+
+## Actions
+
+Both Dompa and its nodes have actions - a way to extend built-in functionality to do additional things, like for example converting the node tree into some desired result or perhaps manipulating inner state. Use your imagination.
+
+### Dompa Actions
+
+You can create a Dompa action by extending the abstract class `dompa.DompaAction` with your action class, like for example:
+
+```python
+from dompa import Dompa, DompaAction
+
+class MyAction(DompaAction):
+    def __init__(self, instance: Dompa):
+        self.instance = instance
+
+    def make(self):
+        pass
+```
+
+Basically, an action gets an instance of the `Dompa` class, and has a `make` method that does something with it.
+
+#### `ToHtml`
+
+To convert the Dompa node tree into an HTML string, you can make use of the `ToHtml` action.
+
+```python
+from dompa import Dompa
+from dompa.actions import ToHtml
+
+template = Dompa("<h1>Hello World</h1>")
+html = template.action(ToHtml)
+```
+
+### Node Actions
+
+Node actions are basically identical to Dompa actions, except that they are in a different namespace and, naturally, only work on the `Node` class (and its child classes). You can create a Node action by extending the abstract class `dompa.nodes.NodeAction` with your action class, like so:
+
+```python
+from dompa.nodes import Node, NodeAction
+
+class MyAction(NodeAction):
+    def __init__(self, instance: Node):
+        self.instance = instance
+
+    def make(self):
+        pass
+```
+
+Just like with the `DompaAction`, a `NodeAction` also gets an instance of the `Node` class, and has a `make` method that does something with it.
+
+#### `ToHtml`
+
+To convert a `Node` into an HTML string, you can make use of the `ToHtml` action.
+
+```python
+from dompa import Dompa
+from dompa.nodes.actions import ToHtml
+
+template = Dompa("<h1>Hello World</h1>")
+h1_node = template.query(lambda x: x.name == "h1")[0]
+html = h1_node.action(ToHtml)
 ```

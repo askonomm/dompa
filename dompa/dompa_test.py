@@ -1,74 +1,74 @@
 from typing import Optional
 
 from dompa import Dompa
-from dompa.nodes import TextNode, Node
-from dompa.nodes.fragment_node import FragmentNode
+from dompa.actions import ToHtml
+from dompa.nodes import TextNode, Node, FragmentNode
 
 
 def test_html_equality():
     html = '<html><body>Hello</body></html>'
     dom = Dompa(html)
 
-    assert dom.html() == html
+    assert dom.action(ToHtml) == html
 
 
 def test_html_equality2():
     html = '<!DOCTYPE html><html><body>Hello</body></html>'
     dom = Dompa(html)
 
-    assert dom.html() == html
+    assert dom.action(ToHtml) == html
 
 
 def test_html_equality3():
     html = '<div class=\"test test2 test3\">Hello</div>'
     dom = Dompa(html)
 
-    assert dom.html() == html
+    assert dom.action(ToHtml) == html
 
 
 def test_html_equality4():
     html = '<input type=\"radio\" checked>'
     dom = Dompa(html)
 
-    assert dom.html() == html
+    assert dom.action(ToHtml) == html
 
 
 def test_html_equality5():
     html = 'Hello, World!'
     dom = Dompa(html)
 
-    assert dom.html() == "Hello, World!"
+    assert dom.action(ToHtml) == "Hello, World!"
 
 
-def test_invalid_html():
+def test_invalid_to_html():
     html = '<div><p>Hello</p>'
     dom = Dompa(html)
 
-    assert dom.html() == '<div></div><p>Hello</p>'
+    assert dom.action(ToHtml) == '<div></div><p>Hello</p>'
 
 
 def test_invalid_html2():
     html = '<div><p>Hello</div></p>'
     dom = Dompa(html)
 
-    assert dom.html() == '<div>Hello</div><p></p>'
+    assert dom.action(ToHtml) == '<div>Hello</div><p></p>'
 
 
 def test_invalid_html3():
     html = '<div><p>Hello</div></span>'
     dom = Dompa(html)
 
-    assert dom.html() == '<div><p></p>Hello</div>'
+    assert dom.action(ToHtml) == '<div><p></p>Hello</div>'
 
 
 def test_nodes():
     html = '<div>Hello, World</div>'
     dom = Dompa(html)
 
-    assert len(dom.nodes()) == 1
-    assert len(dom.nodes()[0].children) == 1
-    assert isinstance(dom.nodes()[0], Node)
-    assert isinstance(dom.nodes()[0].children[0], TextNode)
+    assert len(dom.get_nodes()) == 1
+    assert len(dom.get_nodes()[0].children) == 1
+    assert isinstance(dom.get_nodes()[0], Node)
+    assert isinstance(dom.get_nodes()[0].children[0], TextNode)
 
 
 def test_query():
@@ -115,7 +115,7 @@ def test_traverse_update_node():
 
     dom.traverse(update_title)
 
-    assert dom.html() == "<div><h1>Hello, World!</h1><p>Content</p></div>"
+    assert dom.action(ToHtml) == "<div><h1>Hello, World!</h1><p>Content</p></div>"
 
 
 def test_traverse_replace_node():
@@ -130,7 +130,7 @@ def test_traverse_replace_node():
 
     dom.traverse(update_title)
 
-    assert dom.html() == "<div><p>Some Paragraph</p><p>Content</p></div>"
+    assert dom.action(ToHtml) == "<div><p>Some Paragraph</p><p>Content</p></div>"
 
 
 def test_traverse_remove_node():
@@ -145,7 +145,7 @@ def test_traverse_remove_node():
 
     dom.traverse(update_title)
 
-    assert dom.html() == "<div><p>Content</p></div>"
+    assert dom.action(ToHtml) == "<div><p>Content</p></div>"
 
 
 def test_traverse_fragment_node():
@@ -163,4 +163,4 @@ def test_traverse_fragment_node():
 
     dom.traverse(replace_title)
 
-    assert dom.html() == "<div><h2>Hello, World!</h2><p>Some content ...</p></div>"
+    assert dom.action(ToHtml) == "<div><h2>Hello, World!</h2><p>Some content ...</p></div>"
