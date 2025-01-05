@@ -1,7 +1,7 @@
 [project]
 name = "dompa"
-version = "0.8.0"
-description = "A zero-depencency, extendable HTML5 parser."
+version = "0.8.1"
+description = "A zero-dependency, extendable HTML5 parser."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
