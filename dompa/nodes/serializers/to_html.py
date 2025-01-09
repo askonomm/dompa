@@ -1,15 +1,15 @@
-from ..node_action import NodeAction
+from ..serializer import Serializer
 from .. import Node
 from ...utils import recur_to_html
 
 
-class ToHtml(NodeAction):
+class ToHtml(Serializer):
     __node: Node
 
-    def __init__(self, instance: Node):
-        self.__node = instance
+    def __init__(self, node: Node):
+        self.__node = node
 
-    def make(self) -> str:
+    def serialize(self) -> str:
         """
         Transform the node tree into a HTML string.
         """

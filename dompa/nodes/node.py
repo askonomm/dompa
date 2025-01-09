@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Union, Any
 
-from .node_action import NodeAction
+from .serializer import Serializer
 
 
 class Node:
@@ -14,5 +14,9 @@ class Node:
         self.attributes = kwargs.get("attributes") or {}
         self.children = kwargs.get("children") or []
 
-    def action(self, action: type[NodeAction]) -> Any:
-        return action(self).make()
+    def serialize(self, serializer: type[Serializer]) -> Any:
+        """
+        Serialize the node into an output created by a given
+        serializer.
+        """
+        return serializer(self).serialize()

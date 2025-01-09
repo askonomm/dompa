@@ -157,72 +157,81 @@ Would render:
 <p>Some content ...</p>
 ```
 
-## Actions
+## Serializers
 
-Both Dompa and its nodes have actions - a way to extend built-in functionality to do additional things, for example
-converting the node tree into some desired result or perhaps manipulating inner state. Use your imagination.
+Both Dompa and its nodes have support for serializers - a way to transform data to whatever you want.
 
-### Dompa Actions
+### Dompa Serializers
 
-You can create a Dompa action by extending the abstract class `dompa.DompaAction` with your action class, like for
+You can create a Dompa serializer by extending the abstract class `dompa.Serializer` with your serializer class, like
+for
 example:
 
 ```python
-from dompa import Dompa, DompaAction
+from dompa import Serializer
+from dompa.nodes import Node
 
 
-class MyAction(DompaAction):
-    def __init__(self, instance: Dompa):
-        self.instance = instance
+class MySerializer(Serializer):
+    def __init__(self, nodes: list[Node]):
+        self.nodes = nodes
 
-    def make(self):
+    def serialize(self):
         pass
 ```
 
-Basically, an action gets an instance of the `Dompa` class, and has a `make` method that does something with it.
+Basically, a Dompa serializer gets the node tree, and has a `serialize` method that does transforms it into something.
 
 #### `ToHtml`
 
-To convert the Dompa node tree into an HTML string, you can make use of the `ToHtml` serialization action.
+Dompa comes with a built-in serializer to transform the node tree into a HTML string.
+
+Example usage:
 
 ```python
 from dompa import Dompa
-from dompa.actions import ToHtml
+from dompa.serializers import ToHtml
 
 template = Dompa("<h1>Hello World</h1>")
-html = template.action(ToHtml)
+html = template.serialize(ToHtml)
 ```
 
-### Node Actions
+### Node Serializers
 
-Node actions are basically identical to Dompa actions, except that they are in a different namespace and, naturally,
-only work on the `Node` class (and its child classes). You can create a Node action by extending the abstract class
-`dompa.nodes.NodeAction` with your action class, like so:
+Node serializers are basically identical to Dompa serializers, except that they are in a different namespace and, when
+Dompa
+serializers work with a node tree, Node serializers work with a singular node (and its children, if it has any).
+
+You can create a Node serializer by extending the abstract class `dompa.nodes.Serializer` with your serializer class,
+like
+for example:
 
 ```python
-from dompa.nodes import Node, NodeAction
+from dompa.nodes import Node, Serializer
 
 
-class MyAction(NodeAction):
-    def __init__(self, instance: Node):
-        self.instance = instance
+class MySerializer(Serializer):
+    def __init__(self, node: Node):
+        self.node = node
 
-    def make(self):
+    def serialize(self):
         pass
 ```
 
-Just like with the `DompaAction`, a `NodeAction` gets an instance of the `Node` class, and has a `make` method that
-does something with it.
+A `Node` serializer is very much like a `Dompa` serializer. Unlike the `Dompa` serializer, which gets a node tree to
+work with, a `Node` serializer gets a singular node.
 
 #### `ToHtml`
 
-To convert a `Node` into an HTML string, you can make use of the `ToHtml` serialization action.
+Dompa comes with a built-in serializer to transform a node into a HTML string.
+
+Example use:
 
 ```python
 from dompa import Dompa
-from dompa.nodes.actions import ToHtml
+from dompa.nodes.serializers import ToHtml
 
 template = Dompa("<h1>Hello World</h1>")
 h1_node = template.query(lambda x: x.name == "h1")[0]
-html = h1_node.action(ToHtml)
+html = h1_node.serialize(ToHtml)
 ```

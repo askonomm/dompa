@@ -1,2 +1,2 @@
 from .dompa import Dompa
-from .dompa_action import DompaAction
+from .serializer import Serializer

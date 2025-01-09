@@ -5,11 +5,11 @@ from typing import Any
 import dompa.nodes
 
 
-class NodeAction(ABC):
+class Serializer(ABC):
     @abstractmethod
-    def __init__(self, instance: dompa.nodes.Node):
-        self.instance = instance
+    def __init__(self, node: dompa.nodes.Node):
+        self.node = node
 
     @abstractmethod
-    def make(self) -> Any:
+    def serialize(self) -> Any:
         pass

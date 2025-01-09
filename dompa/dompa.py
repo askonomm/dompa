@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 from typing import Any, Tuple, Callable, Optional, Union, Set
-from .dompa_action import DompaAction
+from .serializer import Serializer
 from .nodes import IrNode, TextNode, VoidNode, Node, FragmentNode
 
 
@@ -34,8 +34,12 @@ class Dompa:
         self.__join_ir_nodes()
         self.__create_nodes()
 
-    def action(self, action: type[DompaAction]) -> Any:
-        return action(self).make()
+    def serialize(self, serializer: type[Serializer]) -> Any:
+        """
+        Serialize the node tree into an output created by a given
+        serializer.
+        """
+        return serializer(self.__nodes).serialize()
 
     def __create_ir_nodes(self) -> None:
         """
@@ -202,7 +206,7 @@ class Dompa:
         """
         if ir_node.name == "_text_node":
             return TextNode(
-                value=self.__template[ir_node.coords[0] : ir_node.coords[1]],
+                value=self.__template[ir_node.coords[0]: ir_node.coords[1]],
             )
 
         if ir_node.name.lower() in self.__void_names:
@@ -290,7 +294,7 @@ class Dompa:
         tag, which could have child tags, so this only gets the attribute str from the first
         tag, or none at all.
         """
-        node_str = self.__template[coords[0] : coords[1]]
+        node_str = self.__template[coords[0]: coords[1]]
         attr_str_start = None
         attr_str_end = None
 
