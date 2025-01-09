@@ -26,29 +26,29 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install flake8 pytest coverage genbadge[all]
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install flake8 pytest coverage genbadge[all]
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Test with pytest
-      run: |
-        coverage run -m pytest
-        coverage report
-        coverage xml
+      - name: Test with pytest
+        run: |
+          coverage run -m pytest
+          coverage report
+          coverage xml
 
-    - name: Create coverage badge
-      run: |
-        genbadge coverage -i coverage.xml
+      - name: Create coverage badge
+        run: |
+          genbadge coverage -i coverage.xml
 
-    - uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        commit_message: Update Coverage
-        file_pattern: 'coverage-badge.svg'
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: Update Coverage
+          file_pattern: 'coverage-badge.svg'
