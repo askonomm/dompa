@@ -2,7 +2,8 @@
 
 ![Coverage](https://raw.githubusercontent.com/askonomm/dompa/refs/heads/master/coverage-badge.svg)
 
-A zero-dependency HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, and provides an API for querying and manipulating said node tree.
+A zero-dependency HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, and provides
+an API for querying and manipulating said node tree.
 
 ## Install
 
@@ -49,7 +50,9 @@ All nodes returned with `query` are deep copies, so mutating them has no effect 
 
 ### `traverse`
 
-The `traverse` method is very similar to the `query` method, but instead of returning deep copies of data it returns a direct reference to data instead, meaning it is ideal for updating the node tree inside of Dompa. It takes a `Callable` that gets a `Node` passed to it, and has to return the updated node, like so:
+The `traverse` method is very similar to the `query` method, but instead of returning deep copies of data it returns a
+direct reference to data instead, meaning it is ideal for updating the node tree inside of Dompa. It takes a `Callable`
+that gets a `Node` passed to it, and has to return the updated node, like so:
 
 ```python
 from typing import Optional
@@ -69,7 +72,8 @@ def update_title(node: Node) -> Optional[Node]:
 dom.traverse(update_title)
 ```
 
-If you wish to remove a node then return `None` instead of the node. If you wish to replace a single node with multiple nodes, use [`FragmentNode`](#fragmentnode).
+If you wish to remove a node then return `None` instead of the node. If you wish to replace a single node with multiple
+nodes, use [`FragmentNode`](#fragmentnode).
 
 ## Types of nodes
 
@@ -89,6 +93,7 @@ Node(name="name-goes-here", attributes={}, children=[])
 Would render:
 
 ```html
+
 <name-goes-here></name-goes-here>
 ```
 
@@ -107,6 +112,7 @@ VoidNode(name="name-goes-here", attributes={})
 Would render:
 
 ```html
+
 <name-goes-here>
 ```
 
@@ -131,7 +137,9 @@ Hello, World!
 
 ### `FragmentNode`
 
-A fragment node is a node whose children will replace itself. It is sort of a transient node in a sense that it doesn't really exist. You can use it to replace a single node with multiple nodes on the same level inside of the `traverse` method.
+A fragment node is a node whose children will replace itself. It is sort of a transient node in a sense that it doesn't
+really exist. You can use it to replace a single node with multiple nodes on the same level inside of the `traverse`
+method.
 
 ```python
 from dompa.nodes import TextNode, FragmentNode, Node
@@ -151,14 +159,17 @@ Would render:
 
 ## Actions
 
-Both Dompa and its nodes have actions - a way to extend built-in functionality to do additional things, like for example converting the node tree into some desired result or perhaps manipulating inner state. Use your imagination.
+Both Dompa and its nodes have actions - a way to extend built-in functionality to do additional things, for example
+converting the node tree into some desired result or perhaps manipulating inner state. Use your imagination.
 
 ### Dompa Actions
 
-You can create a Dompa action by extending the abstract class `dompa.DompaAction` with your action class, like for example:
+You can create a Dompa action by extending the abstract class `dompa.DompaAction` with your action class, like for
+example:
 
 ```python
 from dompa import Dompa, DompaAction
+
 
 class MyAction(DompaAction):
     def __init__(self, instance: Dompa):
@@ -172,7 +183,7 @@ Basically, an action gets an instance of the `Dompa` class, and has a `make` met
 
 #### `ToHtml`
 
-To convert the Dompa node tree into an HTML string, you can make use of the `ToHtml` action.
+To convert the Dompa node tree into an HTML string, you can make use of the `ToHtml` serialization action.
 
 ```python
 from dompa import Dompa
@@ -184,10 +195,13 @@ html = template.action(ToHtml)
 
 ### Node Actions
 
-Node actions are basically identical to Dompa actions, except that they are in a different namespace and, naturally, only work on the `Node` class (and its child classes). You can create a Node action by extending the abstract class `dompa.nodes.NodeAction` with your action class, like so:
+Node actions are basically identical to Dompa actions, except that they are in a different namespace and, naturally,
+only work on the `Node` class (and its child classes). You can create a Node action by extending the abstract class
+`dompa.nodes.NodeAction` with your action class, like so:
 
 ```python
 from dompa.nodes import Node, NodeAction
+
 
 class MyAction(NodeAction):
     def __init__(self, instance: Node):
@@ -197,11 +211,12 @@ class MyAction(NodeAction):
         pass
 ```
 
-Just like with the `DompaAction`, a `NodeAction` also gets an instance of the `Node` class, and has a `make` method that does something with it.
+Just like with the `DompaAction`, a `NodeAction` gets an instance of the `Node` class, and has a `make` method that
+does something with it.
 
 #### `ToHtml`
 
-To convert a `Node` into an HTML string, you can make use of the `ToHtml` action.
+To convert a `Node` into an HTML string, you can make use of the `ToHtml` serialization action.
 
 ```python
 from dompa import Dompa
