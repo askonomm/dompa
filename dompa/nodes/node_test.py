@@ -15,10 +15,6 @@ def test_void_node_html_equality():
 
 
 def test_fragment_node_html_equality():
-    node = FragmentNode(children=[
-        Node(name="div"),
-        TextNode(value="Test"),
-        VoidNode(name="img")
-    ])
+    node = FragmentNode(children=[Node(name="div"), TextNode(value="Test"), VoidNode(name="img")])
 
     assert node.serialize(ToHtml) == "<div></div>Test<img>"

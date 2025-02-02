@@ -1,13 +1,15 @@
 from __future__ import annotations
 import copy
 from typing import Any, Tuple, Callable, Optional, Union, Set
+
+from dompa.types import T
 from .serializer import Serializer
 from .nodes import IrNode, TextNode, VoidNode, Node, FragmentNode
 
 
 class Dompa:
     __nodes: list[Node]
-    __template: str
+    __html: str
     __ir_nodes: list[IrNode]
     __void_names = [
         "!doctype",
@@ -23,18 +25,18 @@ class Dompa:
         "meta",
         "source",
         "track",
-        "wbr"
+        "wbr",
     ]
 
     def __init__(self, template: str) -> None:
-        self.__template = template
+        self.__html = template
         self.__ir_nodes = []
         self.__nodes = []
         self.__create_ir_nodes()
         self.__join_ir_nodes()
         self.__create_nodes()
 
-    def serialize(self, serializer: type[Serializer]) -> Any:
+    def serialize(self, serializer: type[Serializer[T]]) -> T:
         """
         Serialize the node tree into an output created by a given
         serializer.
@@ -53,7 +55,7 @@ class Dompa:
         text_start = None
         text_end = None
 
-        for idx, char in enumerate(self.__template):
+        for idx, char in enumerate(self.__html):
             # start of a tag, or perhaps end of a text node
             if char == "<":
                 if text_start is not None:
@@ -63,7 +65,7 @@ class Dompa:
 
             # last char, but not end of tag, means we're
             # in a text node
-            if len(self.__template) - 1 == idx and char != ">":
+            if len(self.__html) - 1 == idx and char != ">":
                 text_end = idx + 1
 
             # end of a tag
@@ -72,7 +74,7 @@ class Dompa:
 
             # when we have all tag collection data, lets collect it
             if tag_start is not None and tag_end is not None:
-                tag = self.__template[tag_start:tag_end]
+                tag = self.__html[tag_start:tag_end]
 
                 if tag.startswith("</"):
                     self.__maybe_close_ir_node(tag, tag_end)
@@ -206,7 +208,7 @@ class Dompa:
         """
         if ir_node.name == "_text_node":
             return TextNode(
-                value=self.__template[ir_node.coords[0]: ir_node.coords[1]],
+                value=self.__html[ir_node.coords[0] : ir_node.coords[1]],
             )
 
         if ir_node.name.lower() in self.__void_names:
@@ -294,7 +296,7 @@ class Dompa:
         tag, which could have child tags, so this only gets the attribute str from the first
         tag, or none at all.
         """
-        node_str = self.__template[coords[0]: coords[1]]
+        node_str = self.__html[coords[0] : coords[1]]
         attr_str_start = None
         attr_str_end = None
 
@@ -345,7 +347,9 @@ class Dompa:
         """
         self.__nodes = self.__recur_traverse(self.__nodes, callback)
 
-    def __recur_traverse(self, nodes: list[Node], callback: Callable[[Node], Optional[Node]]) -> list[Node]:
+    def __recur_traverse(
+        self, nodes: list[Node], callback: Callable[[Node], Optional[Node]]
+    ) -> list[Node]:
         """
         Recursively iterates over the node tree and updates nodes based on the `callback`
         function. If the `callback` function returns a `Node`, then the `Node` in the

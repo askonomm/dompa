@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Union, Any
 
+from dompa.types import T
+
 from .serializer import Serializer
 
 
@@ -14,7 +16,7 @@ class Node:
         self.attributes = kwargs.get("attributes") or {}
         self.children = kwargs.get("children") or []
 
-    def serialize(self, serializer: type[Serializer]) -> Any:
+    def serialize(self, serializer: type[Serializer[T]]) -> T:
         """
         Serialize the node into an output created by a given
         serializer.

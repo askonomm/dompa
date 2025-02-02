@@ -3,7 +3,7 @@ from .. import Node
 from ...utils import recur_to_html
 
 
-class ToHtml(Serializer):
+class ToHtml(Serializer[str]):
     __node: Node
 
     def __init__(self, node: Node):

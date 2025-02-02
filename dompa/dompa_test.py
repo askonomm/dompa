@@ -40,6 +40,13 @@ def test_html_equality5():
     assert dom.serialize(ToHtml) == "Hello, World!"
 
 
+def test_html_equality6():
+    html = "<div>some elem</div>some text"
+    dom = Dompa(html)
+
+    assert dom.serialize(ToHtml) == "<div>some elem</div>some text"
+
+
 def test_invalid_to_html():
     html = '<div><p>Hello</p>'
     dom = Dompa(html)

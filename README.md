@@ -19,15 +19,15 @@ The most basic usage looks like this:
 
 ```python
 from dompa import Dompa
-from dompa.actions import ToHtml
+from dompa.serializers import ToHtml
 
 dom = Dompa("<div>Hello, World</div>")
 
 # Get the tree of nodes
 nodes = dom.get_nodes()
 
-# Turn the node tree into HTML
-html = dom.action(ToHtml)
+# Turn the node tree back into HTML
+html = dom.serialize(ToHtml)
 ```
 
 ## DOM manipulation
@@ -51,7 +51,7 @@ All nodes returned with `query` are deep copies, so mutating them has no effect 
 ### `traverse`
 
 The `traverse` method is very similar to the `query` method, but instead of returning deep copies of data it returns a
-direct reference to data instead, meaning it is ideal for updating the node tree inside of Dompa. It takes a `Callable`
+direct reference to data instead, meaning it is ideal for updating the node tree inside Dompa. It takes a `Callable`
 that gets a `Node` passed to it, and has to return the updated node, like so:
 
 ```python
@@ -172,19 +172,19 @@ from dompa import Serializer
 from dompa.nodes import Node
 
 
-class MySerializer(Serializer):
+class MySerializer(Serializer[str]):
     def __init__(self, nodes: list[Node]):
         self.nodes = nodes
 
-    def serialize(self):
+    def serialize(self) -> str:
         pass
 ```
 
-Basically, a Dompa serializer gets the node tree, and has a `serialize` method that does transforms it into something.
+Basically, a Dompa serializer gets the node tree, and has a `serialize` method that transforms it into something.
 
 #### `ToHtml`
 
-Dompa comes with a built-in serializer to transform the node tree into a HTML string.
+Dompa comes with a built-in serializer to transform the node tree into an HTML string.
 
 Example usage:
 
@@ -210,11 +210,11 @@ for example:
 from dompa.nodes import Node, Serializer
 
 
-class MySerializer(Serializer):
+class MySerializer(Serializer[str]):
     def __init__(self, node: Node):
         self.node = node
 
-    def serialize(self):
+    def serialize(self) -> str:
         pass
 ```
 
@@ -223,7 +223,7 @@ work with, a `Node` serializer gets a singular node.
 
 #### `ToHtml`
 
-Dompa comes with a built-in serializer to transform a node into a HTML string.
+Dompa comes with a built-in serializer to transform a node into an HTML string.
 
 Example use:
 

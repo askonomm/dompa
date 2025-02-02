@@ -4,7 +4,7 @@ from ..serializer import Serializer
 from ..utils import recur_to_html
 
 
-class ToHtml(Serializer):
+class ToHtml(Serializer[str]):
     __nodes: list[Node] = []
 
     def __init__(self, nodes: list[dompa.nodes.Node]):
