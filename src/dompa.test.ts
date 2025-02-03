@@ -1,5 +1,7 @@
-import Dompa from "./dompa.ts";
+import { dompa, traverse } from "./dompa.ts";
 
 test("abc", () => {
-  const dom = new Dompa("test<div></div><span></span><img><br><hr><input>");
+  const nodes = dompa("<div>test</div>hello world");
+
+  expect(nodes).toBe("updated html");
 });
