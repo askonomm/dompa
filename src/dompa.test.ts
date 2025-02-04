@@ -1,7 +1,8 @@
-import { dompa, traverse } from "./dompa.ts";
+import Dompa from "./dompa.ts";
 
 test("abc", () => {
-  const nodes = dompa("<div>test</div>hello world");
+  const nodes = Dompa.nodes("<div>a<span>b<span>c</span></span></div>");
+  const html = Dompa.serialize(nodes, Dompa.Serializer.Html);
 
-  expect(nodes).toBe("updated html");
+  expect(html).toBe("<div>a<span>b<span>c</span></span></div>");
 });

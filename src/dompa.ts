@@ -1,4 +1,4 @@
-import { Effect, Ref, Context, pipe } from "effect";
+import {Effect, Ref, Context, Option} from "effect";
 
 /**
  *
@@ -6,7 +6,8 @@ import { Effect, Ref, Context, pipe } from "effect";
 class HtmlState extends Context.Tag("HtmlState")<
   HtmlState,
   Ref.Ref<string>
->() {}
+>() {
+}
 
 /**
  * -----------------------------------------------------------------
@@ -27,7 +28,7 @@ class IrNode {
   coords: [number, number];
   children: IrNode[];
 
-  constructor({ name, coords, children }: IrNodeProps) {
+  constructor({name, coords, children}: IrNodeProps) {
     this.name = name;
     this.coords = coords;
     this.children = children;
@@ -37,7 +38,8 @@ class IrNode {
 class IrNodesState extends Context.Tag("IrNodesState")<
   IrNodesState,
   Ref.Ref<IrNode[]>
->() {}
+>() {
+}
 
 /**
  * -----------------------------------------------------------------
@@ -55,12 +57,12 @@ type NodeProps = {
 /**
  *
  */
-export class Node {
+class Node {
   name: string;
   attributes: Attrs;
   children: Node[];
 
-  constructor({ name, attributes, children }: NodeProps) {
+  constructor({name, attributes, children}: NodeProps) {
     this.name = name;
     this.attributes = attributes;
     this.children = children;
@@ -70,11 +72,11 @@ export class Node {
 /**
  *
  */
-export class TextNode extends Node {
+class TextNode extends Node {
   value: string;
 
   constructor(value: string) {
-    super({ name: "_text_node", attributes: {}, children: [] });
+    super({name: "_text_node", attributes: {}, children: []});
     this.value = value;
   }
 }
@@ -82,17 +84,20 @@ export class TextNode extends Node {
 /**
  *
  */
-export class VoidNode extends Node {}
+class VoidNode extends Node {
+}
 
 /**
  *
  */
-export class FragmentNode extends Node {}
+class FragmentNode extends Node {
+}
 
 class NodesState extends Context.Tag("NodesState")<
   NodesState,
   Ref.Ref<Node[]>
->() {}
+>() {
+}
 
 /**
  * -----------------------------------------------------------------
@@ -116,6 +121,9 @@ const voidNames = [
   "wbr",
 ];
 
+/**
+ *
+ */
 const setCoordOfLastIrNodeEffect = (name: string, coord: number) =>
   Effect.gen(function* () {
     const irNodesState = yield* IrNodesState;
@@ -125,7 +133,7 @@ const setCoordOfLastIrNodeEffect = (name: string, coord: number) =>
       return yield* Effect.fail(Error("No IrNode's found."));
     }
 
-    const index = irNodesValue.findLastIndex((n) => n.name === name);
+    const index = irNodesValue.findLastIndex((n) => n.name === name && n.coords[1] === 0);
 
     if (index === -1) {
       return yield* Effect.fail(Error("Could not find matching IrNode."));
@@ -259,10 +267,10 @@ const createIrNodesEffect = Effect.gen(function* () {
   }
 });
 
-const findIrNodesInCoords = (
-  irNodes: IrNode[],
-  coords: [number, number],
-): [number, IrNode][] => {
+/**
+ *
+ */
+const findIrNodesInCoords = (irNodes: IrNode[], coords: [number, number]): [number, IrNode][] => {
   return irNodes.reduce(
     (nodes: [number, IrNode][], node: IrNode, i: number) => {
       if (node.coords[0] > coords[0] && node.coords[1] < coords[1]) {
@@ -275,24 +283,23 @@ const findIrNodesInCoords = (
   );
 };
 
+/**
+ *
+ */
 const joinIrNodesEffect = Effect.gen(function* () {
   const irNodesState = yield* IrNodesState;
 
-  const joinedIrNodes = (
-    irNodes: IrNode[],
-    addedNodes: Set<string>,
-  ): IrNode[] => {
+  const joinIrNodes = (irNodes: IrNode[], added: Set<string>): IrNode[] => {
     return irNodes.reduce((iterNodes: IrNode[], node: IrNode) => {
       const nodeCoordsKey = JSON.stringify(node.coords);
 
-      if (addedNodes.has(nodeCoordsKey)) return iterNodes;
-
-      addedNodes.add(nodeCoordsKey);
+      if (added.has(nodeCoordsKey)) return iterNodes;
+      added.add(nodeCoordsKey);
 
       const iterNodeChildrenList = findIrNodesInCoords(irNodes, node.coords);
       const iterNodeChildrenNodes = iterNodeChildrenList.map((n) => n[1]);
 
-      node.children = joinedIrNodes(iterNodeChildrenNodes, addedNodes);
+      node.children = joinIrNodes(iterNodeChildrenNodes, added);
       iterNodes.push(node);
 
       return iterNodes;
@@ -300,51 +307,51 @@ const joinIrNodesEffect = Effect.gen(function* () {
   };
 
   yield* Ref.update(irNodesState, (irNodes) => {
-    return joinedIrNodes(irNodes, new Set<string>());
+    return joinIrNodes(irNodes, new Set<string>());
   });
 });
 
-const nodeAttrsStrFromCoords = (
-  html: string,
-  coords: [number, number],
-): string | null => {
+/**
+ *
+ */
+const nodeAttrsStrFromCoords = (html: string, coords: [number, number]): Option.Option<string> => {
   const nodeStr = html.substring(coords[0], coords[1]);
-  let attributeStrStart: number | null = null;
-  let attributeStrEnd: number | null = null;
+  let attrsStrStart: Option.Option<number> = Option.none();
+  let attrsStrEnd: Option.Option<number> = Option.none();
 
   for (let i = 0; i < nodeStr.length; i++) {
     const char = nodeStr.at(i);
 
     if (char === ">") {
-      attributeStrEnd = i;
+      attrsStrEnd = Option.some(i);
       break;
     }
 
-    if (attributeStrStart === null && char === " ") {
-      attributeStrStart = i + 1;
+    if (attrsStrStart === null && char === " ") {
+      attrsStrStart = Option.some(i + 1);
     }
   }
 
-  if (attributeStrStart === null || attributeStrEnd === null) {
-    return null;
+  if (Option.isNone(attrsStrStart) || Option.isNone(attrsStrEnd)) {
+    return Option.none();
   }
 
-  return nodeStr.substring(attributeStrStart, attributeStrEnd);
+  return Option.some(nodeStr.substring(attrsStrStart.value, attrsStrEnd.value));
 };
 
 const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
   let attributes: Attrs = {};
   const attrsStr = nodeAttrsStrFromCoords(html, coords);
 
-  if (!attrsStr) {
+  if (Option.isNone(attrsStr)) {
     return attributes;
   }
 
   let iterAttrName = "";
   let iterAttrValue: string | null = null;
 
-  for (let i = 0; i < attrsStr.length; i++) {
-    const char = attrsStr.at(i);
+  for (let i = 0; i < attrsStr.value.length; i++) {
+    const char = attrsStr.value.at(i);
 
     // if we encounter a space, and the last char of `iterAttrValue` is `"`
     // it means we're not in an attr value, in which case a
@@ -367,7 +374,7 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
 
     // same as above is true when we are the last char of the entire `attrStr`,
     // in which case we are ending an attribute declaration.
-    if (i === attrsStr.length - 1 && iterAttrValue !== null) {
+    if (i === attrsStr.value.length - 1 && iterAttrValue !== null) {
       iterAttrValue += char;
 
       if (iterAttrValue.at(0) === '"' && iterAttrValue.at(-1) === '"') {
@@ -383,7 +390,7 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
     // and, same as above is also true when we encounter a space and there is
     // no `iterAttrValue`, meaning it is a Truthy attribute, which needs
     // no explicit value.
-    if ((char === " " || i === attrsStr.length - 1) && iterAttrValue === null) {
+    if ((char === " " || i === attrsStr.value.length - 1) && iterAttrValue === null) {
       attributes[`${iterAttrName}${char}`.trim()] = true;
       iterAttrName = "";
       iterAttrValue = null;
@@ -461,7 +468,7 @@ const createNodesEffect = Effect.gen(function* () {
  * @param html
  * @returns
  */
-export const dompa = (html: string) => {
+const nodes = (html: string) => {
   const program = Effect.gen(function* () {
     yield* createIrNodesEffect;
     yield* joinIrNodesEffect;
@@ -485,7 +492,7 @@ export const dompa = (html: string) => {
  * @param cb
  * @returns
  */
-export const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
+const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
   return nodes.reduce((updatedNodes: Node[], node: Node) => {
     const updatedNode = cb(node);
 
@@ -494,14 +501,14 @@ export const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
       return updatedNodes;
     }
 
-    // If the callback returns a `TextNode`, we don't need to traverse it's children.
+    // If the callback returns a `TextNode`, we don't need to traverse its children.
     if (updatedNode instanceof TextNode) {
       updatedNodes.push(updatedNode);
 
       return updatedNodes;
     }
 
-    // If the callback returns a `FragmentNode`, we need to traverse it's children,
+    // If the callback returns a `FragmentNode`, we need to traverse its children,
     // as it's children will replace the `FragmentNode` itself.
     if (updatedNode instanceof FragmentNode) {
       updatedNodes.push(...traverse(updatedNode.children, cb));
@@ -509,14 +516,14 @@ export const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
       return updatedNodes;
     }
 
-    // If the callback returns a `VoidNode`, we don't need to traverse it's children.
+    // If the callback returns a `VoidNode`, we don't need to traverse its children.
     if (updatedNode instanceof VoidNode) {
       updatedNodes.push(updatedNode);
 
       return updatedNodes;
     }
 
-    // For all other nodes, we need to traverse it's children.
+    // For all other nodes, we need to traverse its children.
     updatedNode.children = traverse(updatedNode.children, cb);
     updatedNodes.push(updatedNode);
 
@@ -530,7 +537,7 @@ export const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
  * @param cb
  * @returns
  */
-export const find = (nodes: Node[], cb: (node: Node) => boolean) => {
+const find = (nodes: Node[], cb: (node: Node) => boolean) => {
   return nodes.reduce((foundNodes: Node[], node: Node) => {
     if (cb(node)) {
       foundNodes.push(node);
@@ -553,10 +560,65 @@ export type Serializer<T> = (nodes: Node[]) => T;
 
 /**
  *
+ */
+const htmlSerializer: Serializer<string> = (nodes: Node[]): string => {
+  return nodes.reduce((html: string, node: Node) => {
+    if (node instanceof TextNode) {
+      return `${html}${node.value}`;
+    }
+
+    if (node instanceof FragmentNode) {
+      return `${html}${htmlSerializer(node.children)}`;
+    }
+
+    const attributesStr = Object.entries(node.attributes).reduce(
+      (acc, [key, value]) => {
+        if (value === true) {
+          return `${acc} ${key}`;
+        }
+
+        return `${acc} ${key}="${value}"`;
+      },
+      ""
+    );
+
+    html += `<${node.name}${attributesStr}>`;
+
+    if (!(node instanceof VoidNode)) {
+      html += htmlSerializer(node.children);
+      html += `</${node.name}>`;
+    }
+
+    return html;
+  }, "");
+};
+
+
+/**
+ *
  * @param nodes
  * @param serializer
  * @returns
  */
-export const serialize = <T>(nodes: Node[], serializer: Serializer<T>): T => {
+const serialize = <T>(nodes: Node[], serializer: Serializer<T>): T => {
   return serializer(nodes);
 };
+
+/**
+ * -----------------------------------------------------------------
+ * Export
+ * -----------------------------------------------------------------
+ */
+export default {
+  nodes,
+  traverse,
+  find,
+  serialize,
+  Node,
+  TextNode,
+  FragmentNode,
+  VoidNode,
+  Serializer: {
+    Html: htmlSerializer,
+  }
+}
