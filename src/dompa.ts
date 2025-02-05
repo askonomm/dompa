@@ -1,13 +1,12 @@
-import {Effect, Ref, Context, Option} from "effect";
+import { Effect, Ref, Context, Option } from "effect";
 
 /**
- *
+ * State for holding the HTML string.
  */
 class HtmlState extends Context.Tag("HtmlState")<
   HtmlState,
   Ref.Ref<string>
->() {
-}
+>() {}
 
 /**
  * -----------------------------------------------------------------
@@ -21,14 +20,16 @@ type IrNodeProps = {
 };
 
 /**
- *
+ * An IR Node (intermediate representation node) is a node that collects
+ * crude information such as the node name, and its coords. Based on that
+ * information we also give it children, if it has any, based on coords
  */
 class IrNode {
   name: string;
   coords: [number, number];
   children: IrNode[];
 
-  constructor({name, coords, children}: IrNodeProps) {
+  constructor({ name, coords, children }: IrNodeProps) {
     this.name = name;
     this.coords = coords;
     this.children = children;
@@ -38,8 +39,7 @@ class IrNode {
 class IrNodesState extends Context.Tag("IrNodesState")<
   IrNodesState,
   Ref.Ref<IrNode[]>
->() {
-}
+>() {}
 
 /**
  * -----------------------------------------------------------------
@@ -55,14 +55,15 @@ type NodeProps = {
 };
 
 /**
- *
+ * A Node is a generic HTML element that has a name, attributes
+ * and children.
  */
 class Node {
   name: string;
   attributes: Attrs;
   children: Node[];
 
-  constructor({name, attributes, children}: NodeProps) {
+  constructor({ name, attributes, children }: NodeProps) {
     this.name = name;
     this.attributes = attributes;
     this.children = children;
@@ -70,34 +71,36 @@ class Node {
 }
 
 /**
- *
+ * A TextNode is a Node that only contains plain text.
  */
 class TextNode extends Node {
   value: string;
 
   constructor(value: string) {
-    super({name: "_text_node", attributes: {}, children: []});
+    super({ name: "_text_node", attributes: {}, children: [] });
     this.value = value;
   }
 }
 
 /**
- *
+ * A VoidNode is a Node that is self-closing, and has no children.
  */
-class VoidNode extends Node {
-}
+class VoidNode extends Node {}
 
 /**
- *
+ * A FragmentNode is a Node which children replace itself.
+ * This is useful if you want to replace the current node in the
+ * traversal iteration with multiple nodes.
  */
-class FragmentNode extends Node {
-}
+class FragmentNode extends Node {}
 
+/**
+ * State for holding the nodes.
+ */
 class NodesState extends Context.Tag("NodesState")<
   NodesState,
   Ref.Ref<Node[]>
->() {
-}
+>() {}
 
 /**
  * -----------------------------------------------------------------
@@ -122,21 +125,27 @@ const voidNames = [
 ];
 
 /**
- *
+ * An Effect that sets the end coord of the last IR Node with given `name`
+ * to `coord`, but only on a last IR node which has its end coord 0, as in
+ * unset.
  */
-const setCoordOfLastIrNodeEffect = (name: string, coord: number) =>
+const setEndCoordOfLastIrNodeEffect = (name: string, coord: number) =>
   Effect.gen(function* () {
     const irNodesState = yield* IrNodesState;
     const irNodesValue = yield* Ref.get(irNodesState);
 
+    //yield* Effect.fail(new Error(":)"));
+
     if (irNodesValue.length === 0) {
-      return yield* Effect.fail(Error("No IrNode's found."));
+      yield* Effect.fail(new Error("No IrNode's found."));
     }
 
-    const index = irNodesValue.findLastIndex((n) => n.name === name && n.coords[1] === 0);
+    const index = irNodesValue.findLastIndex(
+      (n) => n.name === name && n.coords[1] === 0,
+    );
 
     if (index === -1) {
-      return yield* Effect.fail(Error("Could not find matching IrNode."));
+      yield* Effect.fail(new Error("Could not find matching IrNode."));
     }
 
     yield* Ref.update(irNodesState, (irNodes) => {
@@ -145,14 +154,12 @@ const setCoordOfLastIrNodeEffect = (name: string, coord: number) =>
       return irNodes;
     });
 
-    return yield* Effect.succeed(true);
+    yield* Effect.succeed(true);
   });
 
 /**
- *
- * @param tag
- * @param coord
- * @returns
+ * An Effect that closes the last IR node matching `tag` with given
+ * `coord` by setting it as an end coord.
  */
 const closeIrNodeEffect = (tag: string, coord: number) =>
   Effect.gen(function* () {
@@ -161,11 +168,11 @@ const closeIrNodeEffect = (tag: string, coord: number) =>
       .split(" ")[0]
       .trim();
 
-    yield* setCoordOfLastIrNodeEffect(name, coord);
+    yield* setEndCoordOfLastIrNodeEffect(name, coord);
   });
 
 /**
- *
+ * An Effect which creates IR nodes.
  */
 const createIrNodesEffect = Effect.gen(function* () {
   const html = yield* Ref.get(yield* HtmlState);
@@ -268,9 +275,13 @@ const createIrNodesEffect = Effect.gen(function* () {
 });
 
 /**
- *
+ * For given `irNodes`, finds all IR nodes within the given `coords`,
+ * and returns back its index in state, as well as the object itself.
  */
-const findIrNodesInCoords = (irNodes: IrNode[], coords: [number, number]): [number, IrNode][] => {
+const findIrNodesInCoords = (
+  irNodes: IrNode[],
+  coords: [number, number],
+): [number, IrNode][] => {
   return irNodes.reduce(
     (nodes: [number, IrNode][], node: IrNode, i: number) => {
       if (node.coords[0] > coords[0] && node.coords[1] < coords[1]) {
@@ -284,7 +295,9 @@ const findIrNodesInCoords = (irNodes: IrNode[], coords: [number, number]): [numb
 };
 
 /**
- *
+ * An Effect which joins IR Nodes together - meaning that
+ * it turns a flat list of IR Nodes into a tree of IR Nodes,
+ * depending on if they have a parent or not, according to their coords.
  */
 const joinIrNodesEffect = Effect.gen(function* () {
   const irNodesState = yield* IrNodesState;
@@ -312,9 +325,24 @@ const joinIrNodesEffect = Effect.gen(function* () {
 });
 
 /**
+ * From given `html` and `coords` tries to return the attribute
+ * part of a string. So for example if the coordinates point to a
+ * string such as:
  *
+ * ```html
+ * <div class="some-class"></div>
+ * ```
+ *
+ * Then it will attempt to find and return this:
+ *
+ * ```html
+ * class="some-class"
+ * ```
  */
-const nodeAttrsStrFromCoords = (html: string, coords: [number, number]): Option.Option<string> => {
+const nodeAttrsStrFromCoords = (
+  html: string,
+  coords: [number, number],
+): Option.Option<string> => {
   const nodeStr = html.substring(coords[0], coords[1]);
   let attrsStrStart: Option.Option<number> = Option.none();
   let attrsStrEnd: Option.Option<number> = Option.none();
@@ -339,6 +367,22 @@ const nodeAttrsStrFromCoords = (html: string, coords: [number, number]): Option.
   return Option.some(nodeStr.substring(attrsStrStart.value, attrsStrEnd.value));
 };
 
+/**
+ * For given `html` and `coords` tries to return the Attrs object. For example
+ * if the coordinates point to a string such as:
+ *
+ * ```html
+ * <div class="some-class"></div>
+ * ```
+ *
+ * Then it will attempt to find and return this object:
+ *
+ * ```typescript
+ * {
+ *   class: "some-class"
+ * }
+ * ```
+ */
 const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
   let attributes: Attrs = {};
   const attrsStr = nodeAttrsStrFromCoords(html, coords);
@@ -390,7 +434,10 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
     // and, same as above is also true when we encounter a space and there is
     // no `iterAttrValue`, meaning it is a Truthy attribute, which needs
     // no explicit value.
-    if ((char === " " || i === attrsStr.value.length - 1) && iterAttrValue === null) {
+    if (
+      (char === " " || i === attrsStr.value.length - 1) &&
+      iterAttrValue === null
+    ) {
       attributes[`${iterAttrName}${char}`.trim()] = true;
       iterAttrName = "";
       iterAttrValue = null;
@@ -418,6 +465,9 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
   return attributes;
 };
 
+/**
+ * Transforms an `irNode` to a `Node`.
+ */
 const irNodeToNode = (html: string, irNode: IrNode): Node => {
   if (irNode.name === "_text_node") {
     return new TextNode(html.substring(irNode.coords[0], irNode.coords[1]));
@@ -439,7 +489,8 @@ const irNodeToNode = (html: string, irNode: IrNode): Node => {
 };
 
 /**
- *
+ * An Effect which creates Node's from IrNode's. Essentially
+ * turning crude oil into refined oil.
  */
 const createNodesEffect = Effect.gen(function* () {
   const irNodesState = yield* IrNodesState;
@@ -464,21 +515,23 @@ const createNodesEffect = Effect.gen(function* () {
 });
 
 /**
- *
- * @param html
- * @returns
+ * An Effect which puts all the various effects for composing nodes
+ * together to then return the final result as a Node tree.
+ */
+const composeNodesEffect = Effect.gen(function* () {
+  yield* createIrNodesEffect;
+  yield* joinIrNodesEffect;
+  yield* createNodesEffect;
+
+  return yield* Ref.get(yield* NodesState);
+});
+
+/**
+ * Transform the given `html` string into a tree of Node's.
  */
 const nodes = (html: string) => {
-  const program = Effect.gen(function* () {
-    yield* createIrNodesEffect;
-    yield* joinIrNodesEffect;
-    yield* createNodesEffect;
-
-    return yield* Ref.get(yield* NodesState);
-  });
-
   return Effect.runSync(
-    program.pipe(
+    composeNodesEffect.pipe(
       Effect.provideServiceEffect(HtmlState, Ref.make(html)),
       Effect.provideServiceEffect(IrNodesState, Ref.make<IrNode[]>([])),
       Effect.provideServiceEffect(NodesState, Ref.make<Node[]>([])),
@@ -487,14 +540,27 @@ const nodes = (html: string) => {
 };
 
 /**
+ * Traverses the given tree of `nodes` for the purposes of manipulating
+ * said tree of `nodes`. It takes a predicate function `pred` which gets
+ * a single Node passed to it during traversal and which must return a
+ * `Node` or `null`.
  *
- * @param nodes
- * @param cb
- * @returns
+ * If you return the same exact node, it will change nothing, but if you return
+ * an updated node, it will update, and if you return a completely new node,
+ * it will replace it. Returning `null` will remove the node from the tree.
+ *
+ * ---
+ *
+ * ### Types of nodes:
+ *
+ * - `Node` - generic node
+ * - `VoidNode` - a self-closing node (has no children)
+ * - `TextNode` - a node containing only plain text
+ * - `FragmentNode` - a node which children replace itself
  */
-const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
+const traverse = (nodes: Node[], pred: (node: Node) => Node | null): Node[] => {
   return nodes.reduce((updatedNodes: Node[], node: Node) => {
-    const updatedNode = cb(node);
+    const updatedNode = pred(node);
 
     // If the callback returns `null`, it means we want to remove the node.
     if (updatedNode === null) {
@@ -511,7 +577,7 @@ const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
     // If the callback returns a `FragmentNode`, we need to traverse its children,
     // as it's children will replace the `FragmentNode` itself.
     if (updatedNode instanceof FragmentNode) {
-      updatedNodes.push(...traverse(updatedNode.children, cb));
+      updatedNodes.push(...traverse(updatedNode.children, pred));
 
       return updatedNodes;
     }
@@ -524,7 +590,7 @@ const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
     }
 
     // For all other nodes, we need to traverse its children.
-    updatedNode.children = traverse(updatedNode.children, cb);
+    updatedNode.children = traverse(updatedNode.children, pred);
     updatedNodes.push(updatedNode);
 
     return updatedNodes;
@@ -532,19 +598,19 @@ const traverse = (nodes: Node[], cb: (node: Node) => Node | null) => {
 };
 
 /**
- *
- * @param nodes
- * @param cb
- * @returns
+ * Very similar to the `traverse` function, except that instead of manipulating
+ * the tree of nodes, it simply finds nodes matching the predicate function
+ * passed as `pred` instead. Useful if you want to get only a subset of the
+ * tree of nodes.
  */
-const find = (nodes: Node[], cb: (node: Node) => boolean) => {
+const find = (nodes: Node[], pred: (node: Node) => boolean): Node[] => {
   return nodes.reduce((foundNodes: Node[], node: Node) => {
-    if (cb(node)) {
+    if (pred(node)) {
       foundNodes.push(node);
     }
 
     if (node.children.length) {
-      foundNodes.push(...find(node.children, cb));
+      foundNodes.push(...find(node.children, pred));
     }
 
     return foundNodes;
@@ -559,7 +625,7 @@ const find = (nodes: Node[], cb: (node: Node) => boolean) => {
 export type Serializer<T> = (nodes: Node[]) => T;
 
 /**
- *
+ * Serializer the given `nodes` into an HTML string.
  */
 const htmlSerializer: Serializer<string> = (nodes: Node[]): string => {
   return nodes.reduce((html: string, node: Node) => {
@@ -571,7 +637,7 @@ const htmlSerializer: Serializer<string> = (nodes: Node[]): string => {
       return `${html}${htmlSerializer(node.children)}`;
     }
 
-    const attributesStr = Object.entries(node.attributes).reduce(
+    const attrsStr = Object.entries(node.attributes).reduce(
       (acc, [key, value]) => {
         if (value === true) {
           return `${acc} ${key}`;
@@ -579,10 +645,10 @@ const htmlSerializer: Serializer<string> = (nodes: Node[]): string => {
 
         return `${acc} ${key}="${value}"`;
       },
-      ""
+      "",
     );
 
-    html += `<${node.name}${attributesStr}>`;
+    html += `<${node.name}${attrsStr}>`;
 
     if (!(node instanceof VoidNode)) {
       html += htmlSerializer(node.children);
@@ -593,12 +659,50 @@ const htmlSerializer: Serializer<string> = (nodes: Node[]): string => {
   }, "");
 };
 
+/**
+ * Serializes the given `nodes` into a JSON string.
+ */
+const jsonSerializer: Serializer<string> = (nodes: Node[]): string => {
+  const reducer = (reduceNodes: Node[]) =>
+    reduceNodes.reduce((data: Record<string, unknown>[], node: Node) => {
+      if (node instanceof TextNode) {
+        data.push({
+          type: "textNode",
+          value: node.value,
+        });
+      }
+
+      if (node instanceof FragmentNode) {
+        data.push({
+          type: "fragmentNode",
+          children: reducer(node.children),
+        });
+      }
+
+      if (node instanceof VoidNode) {
+        data.push({
+          type: "voidNode",
+          name: node.name,
+          attributes: node.attributes,
+          children: reducer(node.children),
+        });
+      }
+
+      data.push({
+        type: "node",
+        name: node.name,
+        attributes: node.attributes,
+        children: reducer(node.children),
+      });
+
+      return data;
+    }, []);
+
+  return JSON.stringify(reducer(nodes));
+};
 
 /**
- *
- * @param nodes
- * @param serializer
- * @returns
+ * Serializes the given `nodes` with the given `serializer`.
  */
 const serialize = <T>(nodes: Node[], serializer: Serializer<T>): T => {
   return serializer(nodes);
@@ -620,5 +724,6 @@ export default {
   VoidNode,
   Serializer: {
     Html: htmlSerializer,
-  }
-}
+    Json: jsonSerializer,
+  },
+};
