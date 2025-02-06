@@ -1,4 +1,4 @@
-import { Effect, Ref, Context, Option } from "effect";
+import { Effect, Ref, Context, Option, Cause } from "effect";
 
 /**
  * State for holding the HTML string.
@@ -133,19 +133,14 @@ const setEndCoordOfLastIrNodeEffect = (name: string, coord: number) =>
   Effect.gen(function* () {
     const irNodesState = yield* IrNodesState;
     const irNodesValue = yield* Ref.get(irNodesState);
-
-    //yield* Effect.fail(new Error(":)"));
-
-    if (irNodesValue.length === 0) {
-      yield* Effect.fail(new Error("No IrNode's found."));
-    }
-
     const index = irNodesValue.findLastIndex(
       (n) => n.name === name && n.coords[1] === 0,
     );
 
     if (index === -1) {
-      yield* Effect.fail(new Error("Could not find matching IrNode."));
+      yield* Effect.fail(
+        Cause.fail(`Could not find matching node for <${name}>.`),
+      );
     }
 
     yield* Ref.update(irNodesState, (irNodes) => {
@@ -355,7 +350,7 @@ const nodeAttrsStrFromCoords = (
       break;
     }
 
-    if (attrsStrStart === null && char === " ") {
+    if (Option.isNone(attrsStrStart) && char === " ") {
       attrsStrStart = Option.some(i + 1);
     }
   }
@@ -404,7 +399,7 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
     if (
       char === " " &&
       iterAttrValue !== null &&
-      iterAttrValue?.at(-1) !== '"'
+      iterAttrValue?.at(-1) === '"'
     ) {
       if (iterAttrValue?.at(0) === '"' && iterAttrValue?.at(-1) === '"') {
         iterAttrValue = iterAttrValue?.substring(1, iterAttrValue?.length - 1);
@@ -461,6 +456,8 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
     // or if we have not set `iterAttrValue`, keep on collecting `iterAttrName`.
     iterAttrName += char;
   }
+
+  console.log(attributes);
 
   return attributes;
 };
