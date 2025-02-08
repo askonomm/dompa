@@ -38,9 +38,7 @@
     "tsup": "^8.3.5",
     "typescript": "~5.7.3",
     "vite": "^5.4.11",
-    "vitest": "^2.1.8"
-  },
-  "dependencies": {
+    "vitest": "^2.1.8",
     "effect": "^3.12.7"
   }
 }
