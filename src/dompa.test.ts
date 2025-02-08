@@ -42,7 +42,7 @@ describe("Dompa Serialization Tests", () => {
     const nodes = Dompa.nodes(html);
 
     expect(Dompa.serialize(nodes, Dompa.Serializer.Html)).toBe(
-      "<div>some elem</div>some text",
+      "<div>some elem</div>some text"
     );
   });
 
@@ -51,7 +51,7 @@ describe("Dompa Serialization Tests", () => {
     const nodes = Dompa.nodes(html);
 
     expect(Dompa.serialize(nodes, Dompa.Serializer.Html)).toBe(
-      "<div></div><p>Hello</p>",
+      "<div></div><p>Hello</p>"
     );
   });
 
@@ -60,7 +60,7 @@ describe("Dompa Serialization Tests", () => {
     const nodes = Dompa.nodes(html);
 
     expect(Dompa.serialize(nodes, Dompa.Serializer.Html)).toBe(
-      "<div>Hello</div><p></p>",
+      "<div>Hello</div><p></p>"
     );
   });
 
@@ -68,12 +68,12 @@ describe("Dompa Serialization Tests", () => {
     const html = "<div><p>Hello</div></span>";
 
     expect(() => Dompa.nodes(html)).toThrowError(
-      "Error: Could not find matching node for <span>.",
+      "Error: Could not find matching node for <span>."
     );
   });
 });
 
-describe("Dompa Nodes Tests", () => {
+describe("Nodes", () => {
   test("nodes length and children", () => {
     const html = "<div>Hello, World</div>";
     const nodes = Dompa.nodes(html);
@@ -87,22 +87,51 @@ describe("Dompa Nodes Tests", () => {
   // Add more tests for the remaining functions here...
 });
 
-describe("Dompa Query Tests", () => {
-  test("query by name", () => {
+describe("Query", () => {
+  test("by name", () => {
     const html = "<div><h1>Title</h1><p>Content</p></div>";
     const nodes = Dompa.nodes(html);
 
     const result = Dompa.find(nodes, (n) => n.name === "h1");
+
     expect(result.length).toBe(1);
     expect(result[0] instanceof Dompa.Node).toBeTruthy();
     expect(result[0].children[0] instanceof Dompa.TextNode).toBeTruthy();
   });
 
-  // Add more tests for the remaining functions here...
+  test("fragment node", () => {
+    const html = "<div><h1>Title</h1></div>";
+    const nodes = Dompa.nodes(html);
+
+    Dompa.traverse(nodes, (node) => {
+      if (node.name === "h1") {
+        return new Dompa.FragmentNode({
+          children: [
+            new Dompa.Node({
+              name: "h2",
+              children: [new Dompa.TextNode("Hello, World!")],
+            }),
+            new Dompa.Node({
+              name: "p",
+              children: [new Dompa.TextNode("Some content ...")],
+            }),
+          ],
+        });
+      }
+
+      return node;
+    });
+
+    const result = Dompa.find(nodes, (n) => n.name === "h2");
+
+    expect(result.length).toBe(1);
+    expect(result[0] instanceof Dompa.Node).toBeTruthy();
+    expect(result[0].children[0] instanceof Dompa.TextNode).toBeTruthy();
+  });
 });
 
-describe("Dompa Traverse Tests", () => {
-  test("traverse update node", () => {
+describe("Traverse", () => {
+  test("update node", () => {
     const html = "<div><h1>Title</h1><p>Content</p></div>";
     const nodes = Dompa.nodes(html);
     const updatedNodes = Dompa.traverse(nodes, (node) => {
@@ -113,9 +142,44 @@ describe("Dompa Traverse Tests", () => {
     });
 
     expect(Dompa.serialize(updatedNodes, Dompa.Serializer.Html)).toBe(
-      "<div><h1>Hello, World!</h1><p>Content</p></div>",
+      "<div><h1>Hello, World!</h1><p>Content</p></div>"
     );
   });
 
-  // Add more tests for the remaining functions here...
+  test("replace node", () => {
+    const html = "<div><h1>Title</h1><p>Content</p></div>";
+    const nodes = Dompa.nodes(html);
+
+    const updatedNodes = Dompa.traverse(nodes, (node) => {
+      if (node.name === "h1") {
+        return new Dompa.Node({
+          name: "h2",
+          children: [new Dompa.TextNode("Hello, World!")],
+        });
+      }
+
+      return node;
+    });
+
+    expect(Dompa.serialize(updatedNodes, Dompa.Serializer.Html)).toBe(
+      "<div><h2>Hello, World!</h2><p>Content</p></div>"
+    );
+  });
+
+  test("remove node", () => {
+    const html = "<div><h1>Title</h1><p>Content</p></div>";
+    const nodes = Dompa.nodes(html);
+
+    const updatedNodes = Dompa.traverse(nodes, (node) => {
+      if (node.name === "h1") {
+        return null;
+      }
+
+      return node;
+    });
+
+    expect(Dompa.serialize(updatedNodes, Dompa.Serializer.Html)).toBe(
+      "<div><p>Content</p></div>"
+    );
+  });
 });
