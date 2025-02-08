@@ -1,19 +1,16 @@
-import {
-  gen,
-  fail,
-  succeed,
-  runSync,
-  provideServiceEffect,
-} from "effect/Effect";
-import { Tag } from "effect/Context";
-import { Ref, get, set, update, make } from "effect/Ref";
-import { fail as Fail } from "effect/Cause";
-import { Option, some, none, isNone } from "effect/Option";
+import * as Effect from "effect/Effect";
+import * as Context from "effect/Context";
+import * as Ref from "effect/Ref";
+import * as Cause from "effect/Cause";
+import * as Option from "effect/Option";
 
 /**
  * State for holding the HTML string.
  */
-class HtmlState extends Tag("HtmlState")<HtmlState, Ref<string>>() {}
+class HtmlState extends Context.Tag("HtmlState")<
+  HtmlState,
+  Ref.Ref<string>
+>() {}
 
 /**
  * -----------------------------------------------------------------
@@ -43,7 +40,10 @@ class IrNode {
   }
 }
 
-class IrNodesState extends Tag("IrNodesState")<IrNodesState, Ref<IrNode[]>>() {}
+class IrNodesState extends Context.Tag("IrNodesState")<
+  IrNodesState,
+  Ref.Ref<IrNode[]>
+>() {}
 
 /**
  * -----------------------------------------------------------------
@@ -113,7 +113,10 @@ class FragmentNode extends Node {
 /**
  * State for holding the nodes.
  */
-class NodesState extends Tag("NodesState")<NodesState, Ref<Node[]>>() {}
+class NodesState extends Context.Tag("NodesState")<
+  NodesState,
+  Ref.Ref<Node[]>
+>() {}
 
 /**
  * -----------------------------------------------------------------
@@ -143,24 +146,26 @@ const voidNames = [
  * unset.
  */
 const setEndCoordOfLastIrNodeEffect = (name: string, coord: number) =>
-  gen(function* () {
+  Effect.gen(function* () {
     const irNodesState = yield* IrNodesState;
-    const irNodesValue = yield* get(irNodesState);
+    const irNodesValue = yield* Ref.get(irNodesState);
     const index = irNodesValue.findLastIndex(
       (n) => n.name === name && n.coords[1] === 0,
     );
 
     if (index === -1) {
-      yield* fail(Fail(`Could not find matching node for <${name}>.`));
+      yield* Effect.fail(
+        Cause.fail(`Could not find matching node for <${name}>.`),
+      );
     }
 
-    yield* update(irNodesState, (irNodes) => {
+    yield* Ref.update(irNodesState, (irNodes) => {
       irNodes[index].coords = [irNodes[index].coords[0], coord];
 
       return irNodes;
     });
 
-    yield* succeed(true);
+    yield* Effect.succeed(true);
   });
 
 /**
@@ -168,7 +173,7 @@ const setEndCoordOfLastIrNodeEffect = (name: string, coord: number) =>
  * `coord` by setting it as an end coord.
  */
 const closeIrNodeEffect = (tag: string, coord: number) =>
-  gen(function* () {
+  Effect.gen(function* () {
     const name = tag
       .substring(2, tag.length - 1)
       .split(" ")[0]
@@ -180,8 +185,8 @@ const closeIrNodeEffect = (tag: string, coord: number) =>
 /**
  * An Effect which creates IR nodes.
  */
-const createIrNodesEffect = gen(function* () {
-  const html = yield* get(yield* HtmlState);
+const createIrNodesEffect = Effect.gen(function* () {
+  const html = yield* Ref.get(yield* HtmlState);
   const irNodesState = yield* IrNodesState;
   let tagStart: number | null = null;
   let tagEnd: number | null = null;
@@ -236,7 +241,7 @@ const createIrNodesEffect = gen(function* () {
           children: [],
         });
 
-        yield* update(irNodesState, (irNodes) => {
+        yield* Ref.update(irNodesState, (irNodes) => {
           return [...irNodes, newIrNode];
         });
       } else {
@@ -246,7 +251,7 @@ const createIrNodesEffect = gen(function* () {
           children: [],
         });
 
-        yield* update(irNodesState, (irNodes) => {
+        yield* Ref.update(irNodesState, (irNodes) => {
           return [...irNodes, newIrNode];
         });
       }
@@ -270,7 +275,7 @@ const createIrNodesEffect = gen(function* () {
         children: [],
       });
 
-      yield* update(irNodesState, (irNodes) => {
+      yield* Ref.update(irNodesState, (irNodes) => {
         return [...irNodes, newIrNode];
       });
 
@@ -305,7 +310,7 @@ const findIrNodesInCoords = (
  * it turns a flat list of IR Nodes into a tree of IR Nodes,
  * depending on if they have a parent or not, according to their coords.
  */
-const joinIrNodesEffect = gen(function* () {
+const joinIrNodesEffect = Effect.gen(function* () {
   const irNodesState = yield* IrNodesState;
 
   const joinIrNodes = (irNodes: IrNode[], added: Set<string>): IrNode[] => {
@@ -325,7 +330,7 @@ const joinIrNodesEffect = gen(function* () {
     }, []);
   };
 
-  yield* update(irNodesState, (irNodes) => {
+  yield* Ref.update(irNodesState, (irNodes) => {
     return joinIrNodes(irNodes, new Set<string>());
   });
 });
@@ -348,29 +353,29 @@ const joinIrNodesEffect = gen(function* () {
 const nodeAttrsStrFromCoords = (
   html: string,
   coords: [number, number],
-): Option<string> => {
+): Option.Option<string> => {
   const nodeStr = html.substring(coords[0], coords[1]);
-  let attrsStrStart: Option<number> = none();
-  let attrsStrEnd: Option<number> = none();
+  let attrsStrStart: Option.Option<number> = Option.none();
+  let attrsStrEnd: Option.Option<number> = Option.none();
 
   for (let i = 0; i < nodeStr.length; i++) {
     const char = nodeStr.at(i);
 
     if (char === ">") {
-      attrsStrEnd = some(i);
+      attrsStrEnd = Option.some(i);
       break;
     }
 
-    if (isNone(attrsStrStart) && char === " ") {
-      attrsStrStart = some(i + 1);
+    if (Option.isNone(attrsStrStart) && char === " ") {
+      attrsStrStart = Option.some(i + 1);
     }
   }
 
-  if (isNone(attrsStrStart) || isNone(attrsStrEnd)) {
-    return none();
+  if (Option.isNone(attrsStrStart) || Option.isNone(attrsStrEnd)) {
+    return Option.none();
   }
 
-  return some(nodeStr.substring(attrsStrStart.value, attrsStrEnd.value));
+  return Option.some(nodeStr.substring(attrsStrStart.value, attrsStrEnd.value));
 };
 
 /**
@@ -393,7 +398,7 @@ const nodeAttrsFromCoords = (html: string, coords: [number, number]): Attrs => {
   let attributes: Attrs = {};
   const attrsStr = nodeAttrsStrFromCoords(html, coords);
 
-  if (isNone(attrsStr)) {
+  if (Option.isNone(attrsStr)) {
     return attributes;
   }
 
@@ -498,10 +503,10 @@ const irNodeToNode = (html: string, irNode: IrNode): Node => {
  * An Effect which creates Node's from IrNode's. Essentially
  * turning crude oil into refined oil.
  */
-const createNodesEffect = gen(function* () {
+const createNodesEffect = Effect.gen(function* () {
   const irNodesState = yield* IrNodesState;
   const nodesState = yield* NodesState;
-  const html = yield* get(yield* HtmlState);
+  const html = yield* Ref.get(yield* HtmlState);
 
   const createNodes = (irNodes: IrNode[]): Node[] => {
     return irNodes.reduce((nodes: Node[], irNode: IrNode) => {
@@ -517,30 +522,30 @@ const createNodesEffect = gen(function* () {
     }, []);
   };
 
-  yield* set(nodesState, createNodes(yield* get(irNodesState)));
+  yield* Ref.set(nodesState, createNodes(yield* Ref.get(irNodesState)));
 });
 
 /**
  * An Effect which puts all the various effects for composing nodes
  * together to then return the final result as a Node tree.
  */
-const composeNodesEffect = gen(function* () {
+const composeNodesEffect = Effect.gen(function* () {
   yield* createIrNodesEffect;
   yield* joinIrNodesEffect;
   yield* createNodesEffect;
 
-  return yield* get(yield* NodesState);
+  return yield* Ref.get(yield* NodesState);
 });
 
 /**
  * Transform the given `html` string into a tree of Node's.
  */
 const nodes = (html: string) => {
-  return runSync(
+  return Effect.runSync(
     composeNodesEffect.pipe(
-      provideServiceEffect(HtmlState, make(html)),
-      provideServiceEffect(IrNodesState, make<IrNode[]>([])),
-      provideServiceEffect(NodesState, make<Node[]>([])),
+      Effect.provideServiceEffect(HtmlState, Ref.make(html)),
+      Effect.provideServiceEffect(IrNodesState, Ref.make<IrNode[]>([])),
+      Effect.provideServiceEffect(NodesState, Ref.make<Node[]>([])),
     ),
   );
 };

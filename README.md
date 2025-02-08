@@ -1,6 +1,6 @@
 # Dompa
 
-A zero-dependency HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, and provides
+A HTML5 document parser. It takes an input of an HTML string, parses it into a node tree, and provides
 an API for querying and manipulating said node tree.
 
 ## Install
