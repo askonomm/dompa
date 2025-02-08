@@ -1,7 +1,7 @@
 {
   "name": "dompa",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.0.1",
+  "description": "A zero-dependency HTML5 document parser.",
   "author": "Asko Nõmm <asko@nmm.ee> (https://nmm.ee)",
   "main": "dist/dompa.js",
   "module": "dist/dompa.mjs",
