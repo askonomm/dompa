@@ -659,7 +659,7 @@ const find = (nodes: Node[], pred: (node: Node) => boolean): Node[] => {
 export type Serializer<T> = (nodes: Node[]) => T;
 
 /**
- * Serializer the given `nodes` into an HTML string.
+ * Serialize the given `nodes` into an HTML string.
  */
 const htmlSerializer: Serializer<string> = (nodes: Node[]): string => {
   return nodes.reduce((html: string, node: Node) => {
@@ -738,7 +738,7 @@ const jsonSerializer: Serializer<string> = (nodes: Node[]): string => {
 /**
  * Serializes the given `nodes` with the given `serializer`.
  */
-const serialize = <T>(nodes: Node[], serializer: Serializer<T>): T => {
+const serialize = <T,>(nodes: Node[], serializer: Serializer<T>): T => {
   return serializer(nodes);
 };
 
