@@ -46,7 +46,7 @@ describe("Dompa Serialization Tests", () => {
     );
   });
 
-  test("invalid to_html", () => {
+  test("invalid html", () => {
     const html = "<div><p>Hello</p>";
     const nodes = Dompa.nodes(html);
 
