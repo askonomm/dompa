@@ -42,7 +42,7 @@ describe("Dompa Serialization Tests", () => {
     const nodes = Dompa.nodes(html);
 
     expect(Dompa.serialize(nodes, Dompa.Serializer.Html)).toBe(
-      "<div>some elem</div>some text"
+      "<div>some elem</div>some text",
     );
   });
 
@@ -51,7 +51,7 @@ describe("Dompa Serialization Tests", () => {
     const nodes = Dompa.nodes(html);
 
     expect(Dompa.serialize(nodes, Dompa.Serializer.Html)).toBe(
-      "<div></div><p>Hello</p>"
+      "<div></div><p>Hello</p>",
     );
   });
 
@@ -60,7 +60,7 @@ describe("Dompa Serialization Tests", () => {
     const nodes = Dompa.nodes(html);
 
     expect(Dompa.serialize(nodes, Dompa.Serializer.Html)).toBe(
-      "<div>Hello</div><p></p>"
+      "<div>Hello</div><p></p>",
     );
   });
 
@@ -68,7 +68,7 @@ describe("Dompa Serialization Tests", () => {
     const html = "<div><p>Hello</div></span>";
 
     expect(() => Dompa.nodes(html)).toThrowError(
-      "Error: Could not find matching node for <span>."
+      "Error: Could not find matching node for <span>.",
     );
   });
 });
@@ -134,15 +134,18 @@ describe("Traverse", () => {
   test("update node", () => {
     const html = "<div><h1>Title</h1><p>Content</p></div>";
     const nodes = Dompa.nodes(html);
-    const updatedNodes = Dompa.traverse(nodes, (node) => {
-      if (node.name === "h1") {
-        node.children = [new Dompa.TextNode("Hello, World!")];
-      }
-      return node;
-    });
+    const updatedNodes = Dompa.traverse(
+      nodes,
+      (node: InstanceType<typeof Dompa.Node>) => {
+        if (node.name === "h1") {
+          node.children = [new Dompa.TextNode("Hello, World!")];
+        }
+        return node;
+      },
+    );
 
     expect(Dompa.serialize(updatedNodes, Dompa.Serializer.Html)).toBe(
-      "<div><h1>Hello, World!</h1><p>Content</p></div>"
+      "<div><h1>Hello, World!</h1><p>Content</p></div>",
     );
   });
 
@@ -150,19 +153,22 @@ describe("Traverse", () => {
     const html = "<div><h1>Title</h1><p>Content</p></div>";
     const nodes = Dompa.nodes(html);
 
-    const updatedNodes = Dompa.traverse(nodes, (node) => {
-      if (node.name === "h1") {
-        return new Dompa.Node({
-          name: "h2",
-          children: [new Dompa.TextNode("Hello, World!")],
-        });
-      }
+    const updatedNodes = Dompa.traverse(
+      nodes,
+      (node: InstanceType<typeof Dompa.Node>) => {
+        if (node.name === "h1") {
+          return new Dompa.Node({
+            name: "h2",
+            children: [new Dompa.TextNode("Hello, World!")],
+          });
+        }
 
-      return node;
-    });
+        return node;
+      },
+    );
 
     expect(Dompa.serialize(updatedNodes, Dompa.Serializer.Html)).toBe(
-      "<div><h2>Hello, World!</h2><p>Content</p></div>"
+      "<div><h2>Hello, World!</h2><p>Content</p></div>",
     );
   });
 
@@ -170,16 +176,19 @@ describe("Traverse", () => {
     const html = "<div><h1>Title</h1><p>Content</p></div>";
     const nodes = Dompa.nodes(html);
 
-    const updatedNodes = Dompa.traverse(nodes, (node) => {
-      if (node.name === "h1") {
-        return null;
-      }
+    const updatedNodes = Dompa.traverse(
+      nodes,
+      (node: InstanceType<typeof Dompa.Node>) => {
+        if (node.name === "h1") {
+          return null;
+        }
 
-      return node;
-    });
+        return node;
+      },
+    );
 
     expect(Dompa.serialize(updatedNodes, Dompa.Serializer.Html)).toBe(
-      "<div><p>Content</p></div>"
+      "<div><p>Content</p></div>",
     );
   });
 });
