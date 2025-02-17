@@ -551,6 +551,33 @@ const nodes = (html: string) => {
 };
 
 /**
+ * Clones `nodes`.
+ */
+const cloneNodes = (nodes: Node[]): Node[] => {
+  return [
+    ...nodes.map((node) => {
+      if (node instanceof TextNode) {
+        return new TextNode(node.value);
+      }
+
+      if (node instanceof FragmentNode) {
+        return new FragmentNode({ children: node.children });
+      }
+
+      if (node instanceof VoidNode) {
+        return new VoidNode({ name: node.name, attributes: node.attributes });
+      }
+
+      return new Node({
+        name: node.name,
+        attributes: node.attributes,
+        children: node.children,
+      });
+    }),
+  ];
+};
+
+/**
  * Traverses the given tree of `nodes` for the purposes of manipulating
  * said tree of `nodes`. It takes a predicate function `pred` which gets
  * a single Node passed to it during traversal and which must return a
@@ -570,7 +597,7 @@ const nodes = (html: string) => {
  * - `FragmentNode` - a node which children replace itself
  */
 const traverse = (nodes: Node[], pred: (node: Node) => Node | null): Node[] => {
-  return nodes.reduce((updatedNodes: Node[], node: Node) => {
+  return cloneNodes(nodes).reduce((updatedNodes: Node[], node: Node) => {
     const updatedNode = pred(node);
 
     // If the callback returns `null`, it means we want to remove the node.
@@ -615,26 +642,6 @@ const traverse = (nodes: Node[], pred: (node: Node) => Node | null): Node[] => {
  * tree of nodes.
  */
 const find = (nodes: Node[], pred: (node: Node) => boolean): Node[] => {
-  const uniqueClonedNodes = nodes.map((node) => {
-    if (node instanceof TextNode) {
-      return new TextNode(node.value);
-    }
-
-    if (node instanceof FragmentNode) {
-      return new FragmentNode({ children: node.children });
-    }
-
-    if (node instanceof VoidNode) {
-      return new VoidNode({ name: node.name, attributes: node.attributes });
-    }
-
-    return new Node({
-      name: node.name,
-      attributes: node.attributes,
-      children: node.children,
-    });
-  });
-
   const reducer = (nodes: Node[], pred: (node: Node) => boolean): Node[] =>
     nodes.reduce((foundNodes: Node[], node: Node) => {
       if (pred(node)) {
@@ -648,7 +655,7 @@ const find = (nodes: Node[], pred: (node: Node) => boolean): Node[] => {
       return foundNodes;
     }, []);
 
-  return reducer(uniqueClonedNodes, pred);
+  return reducer(cloneNodes(nodes), pred);
 };
 
 /**
