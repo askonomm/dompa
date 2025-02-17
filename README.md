@@ -38,7 +38,7 @@ const nodes = Dompa.nodes("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>"
 const listItems = Dompa.find(nodes, (n) => n.name === "li");
 ```
 
-All nodes returned with `find` are deep copies, so mutating them has no effect on Dompa's state.
+All nodes returned with `find` are deep copies, so mutating them does not change the nodes in `nodes`.
 
 ## DOM manipulation
 
@@ -53,7 +53,7 @@ import Dompa from "dompa";
 
 const nodes = Dompa.nodes("<h1>Site Title</h1><ul><li>...</li><li>...</li></ul>");
 
-Dompa.traverse(nodes, (node) => {
+const updatedNodes = Dompa.traverse(nodes, (node) => {
     if (node.name === "h1") {
         node.children = [new Dompa.TextNode("New Title")];
     }
@@ -63,7 +63,7 @@ Dompa.traverse(nodes, (node) => {
 ```
 
 If you wish to remove a node then return `null` instead of the node. If you wish to replace a single node with multiple
-nodes, use [`FragmentNode`](#fragmentnode).
+nodes, use [`FragmentNode`](#fragmentnode). Like with `find`, all nodes returned with `traverse` are deep copies.
 
 ## Types of nodes
 
