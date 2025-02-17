@@ -103,7 +103,7 @@ describe("Query", () => {
     const html = "<div><h1>Title</h1></div>";
     const nodes = Dompa.nodes(html);
 
-    Dompa.traverse(nodes, (node) => {
+    const updatedNodes = Dompa.traverse(nodes, (node) => {
       if (node.name === "h1") {
         return new Dompa.FragmentNode({
           children: [
@@ -122,7 +122,7 @@ describe("Query", () => {
       return node;
     });
 
-    const result = Dompa.find(nodes, (n) => n.name === "h2");
+    const result = Dompa.find(updatedNodes, (n) => n.name === "h2");
 
     expect(result.length).toBe(1);
     expect(result[0] instanceof Dompa.Node).toBeTruthy();
