@@ -67,7 +67,7 @@ nodes, use [`FragmentNode`](#fragmentnode). Like with `find`, all nodes returned
 
 ## Types of nodes
 
-There are three types of nodes that you can use in Dompa to manipulate the node tree.
+There are four types of nodes that you can use in Dompa to manipulate the node tree.
 
 ### `Node`
 
@@ -223,7 +223,7 @@ const json = Dompa.serialize([h1], Dompa.Serializer.Json)
 You can also create your own serializers by implementing the `Serializer` type:
 
 ```typescript
-import Dompa from "dompa";
+import Dompa, { Serializer } from "dompa";
 
 const customSerializer: Serializer<T> = (nodes: Node[]): T => {
     // Your implementation here
