@@ -1,9 +1,11 @@
 [package]
 name = "dompa"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
-license-file = "LICENSE.txt"
+license = "MIT"
 description = "A lightweight, zero-dependency HTML5 document parser."
+keywords = ["html", "html5", "dom", "parser", "serializer"]
+categories = ["parser-implementations", "web-programming"]
 homepage = "https://github.com/askonomm/dompa"
 repository = "https://github.com/askonomm/dompa"
 readme = "README.md"
