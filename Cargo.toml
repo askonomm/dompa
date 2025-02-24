@@ -1,0 +1,11 @@
+[package]
+name = "dompa"
+version = "1.0.0"
+edition = "2024"
+license-file = "LICENSE.txt"
+description = "A lightweight, zero-dependency HTML5 document parser."
+homepage = "https://github.com/askonomm/dompa"
+repository = "https://github.com/askonomm/dompa"
+readme = "README.md"
+
+[dependencies]
