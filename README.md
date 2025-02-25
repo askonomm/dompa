@@ -1,6 +1,6 @@
 # Dompa
 
-[![codecov](https://codecov.io/gh/askonomm/dompa/graph/badge.svg?token=resg8uSqLE)](https://codecov.io/gh/askonomm/dompa)
+[![codecov](https://codecov.io/gh/askonomm/dompa/branch/master/graph/badge.svg?token=resg8uSqLE)](https://codecov.io/gh/askonomm/dompa)
 
 A lightweight, zero-dependency HTML5 document parser for Rust. Dompa takes an HTML string as input, parses it into a node tree, and provides an API for querying, manipulating, and serializing the node tree back to HTML.
 
