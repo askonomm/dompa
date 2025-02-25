@@ -22,7 +22,7 @@ fn main() {
     let html = String::from("<div>Hello, World</div>");
     let nodes = dompa::nodes(html);
     
-    /* gdb! output of nodes:
+    /* dbg! output of nodes:
     [
         Block(
             BlockNode {
