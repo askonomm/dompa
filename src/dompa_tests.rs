@@ -49,12 +49,12 @@ fn test_nodes_void_tag() {
 
         assert_eq!(
             void_node.attributes.get("src"),
-            Some(&NodeAttributeValue::String("test.jpg".to_string()))
+            Some(&NodeAttrVal::String("test.jpg".to_string()))
         );
 
         assert_eq!(
             void_node.attributes.get("alt"),
-            Some(&NodeAttributeValue::String("Test".to_string()))
+            Some(&NodeAttrVal::String("Test".to_string()))
         );
     }
 }
@@ -69,12 +69,12 @@ fn test_nodes_with_attributes() {
 
         assert_eq!(
             block_node.attributes.get("class"),
-            Some(&NodeAttributeValue::String("container".to_string()))
+            Some(&NodeAttrVal::String("container".to_string()))
         );
 
         assert_eq!(
             block_node.attributes.get("id"),
-            Some(&NodeAttributeValue::String("main".to_string()))
+            Some(&NodeAttrVal::String("main".to_string()))
         );
     } else {
         panic!("Expected a block node");
@@ -91,7 +91,7 @@ fn test_nodes_boolean_attribute() {
 
         assert_eq!(
             block_node.attributes.get("disabled"),
-            Some(&NodeAttributeValue::True)
+            Some(&NodeAttrVal::True)
         );
     } else {
         panic!("Expected a block node");
@@ -186,7 +186,7 @@ fn test_traverse_modify_all_nodes() {
             Node::Block(block) => {
                 let mut attrs = HashMap::new();
 
-                attrs.insert("data-transformed".to_string(), NodeAttributeValue::True);
+                attrs.insert("data-transformed".to_string(), NodeAttrVal::True);
 
                 Some(Node::block(
                     block.name.clone(),
@@ -198,7 +198,7 @@ fn test_traverse_modify_all_nodes() {
             Node::Void(void) => {
                 let mut attrs = HashMap::new();
 
-                attrs.insert("data-transformed".to_string(), NodeAttributeValue::True);
+                attrs.insert("data-transformed".to_string(), NodeAttrVal::True);
 
                 for (k, v) in &void.attributes {
                     attrs.insert(k.clone(), v.clone());
@@ -342,7 +342,7 @@ fn test_constructor_methods() {
 
     attrs.insert(
         "class".to_string(),
-        NodeAttributeValue::String("container".to_string()),
+        NodeAttrVal::String("container".to_string()),
     );
 
     let block_with_attrs = Node::block("div", attrs.clone(), vec![]);
@@ -376,7 +376,7 @@ fn test_constructor_methods() {
 
         assert_eq!(
             block.attributes.get("class"),
-            Some(&NodeAttributeValue::String("container".to_string()))
+            Some(&NodeAttrVal::String("container".to_string()))
         );
     } else {
         panic!("Expected a block node");
@@ -388,7 +388,7 @@ fn test_constructor_methods() {
 
         assert_eq!(
             void.attributes.get("class"),
-            Some(&NodeAttributeValue::String("container".to_string()))
+            Some(&NodeAttrVal::String("container".to_string()))
         );
     } else {
         panic!("Expected a void node");
@@ -415,12 +415,12 @@ fn test_to_html_void_node_with_attributes() {
 
     attrs.insert(
         "src".to_string(),
-        NodeAttributeValue::String("image.jpg".to_string()),
+        NodeAttrVal::String("image.jpg".to_string()),
     );
 
     attrs.insert(
         "alt".to_string(),
-        NodeAttributeValue::String("An image".to_string()),
+        NodeAttrVal::String("An image".to_string()),
     );
 
     let nodes = vec![Node::void("img", attrs)];
@@ -441,12 +441,9 @@ fn test_to_html_block_node_with_attributes() {
 
     attrs.insert(
         "class".to_string(),
-        NodeAttributeValue::String("container".to_string()),
+        NodeAttrVal::String("container".to_string()),
     );
-    attrs.insert(
-        "id".to_string(),
-        NodeAttributeValue::String("main".to_string()),
-    );
+    attrs.insert("id".to_string(), NodeAttrVal::String("main".to_string()));
 
     let nodes = vec![Node::block("div", attrs, vec![Node::text("Content")])];
 
@@ -487,12 +484,9 @@ fn test_to_html_fragment_node() {
 fn test_to_html_mixed_node_types() {
     let mut attrs = HashMap::new();
 
-    attrs.insert(
-        "class".to_string(),
-        NodeAttributeValue::String("btn".to_string()),
-    );
+    attrs.insert("class".to_string(), NodeAttrVal::String("btn".to_string()));
 
-    attrs.insert("disabled".to_string(), NodeAttributeValue::True);
+    attrs.insert("disabled".to_string(), NodeAttrVal::True);
 
     let nodes = vec![Node::simple_block(
         "div",
@@ -536,8 +530,8 @@ fn test_to_html_multiple_root_nodes() {
 fn test_to_html_boolean_attributes() {
     let mut attrs = HashMap::new();
 
-    attrs.insert("required".to_string(), NodeAttributeValue::True);
-    attrs.insert("readonly".to_string(), NodeAttributeValue::True);
+    attrs.insert("required".to_string(), NodeAttrVal::True);
+    attrs.insert("readonly".to_string(), NodeAttrVal::True);
 
     let nodes = vec![Node::void("input", attrs)];
 
@@ -550,38 +544,35 @@ fn test_to_html_complex_html_structure() {
 
     form_attrs.insert(
         "action".to_string(),
-        NodeAttributeValue::String("/submit".to_string()),
+        NodeAttrVal::String("/submit".to_string()),
     );
 
     form_attrs.insert(
         "method".to_string(),
-        NodeAttributeValue::String("post".to_string()),
+        NodeAttrVal::String("post".to_string()),
     );
 
     let mut input_attrs = HashMap::new();
 
-    input_attrs.insert(
-        "type".to_string(),
-        NodeAttributeValue::String("text".to_string()),
-    );
+    input_attrs.insert("type".to_string(), NodeAttrVal::String("text".to_string()));
 
     input_attrs.insert(
         "name".to_string(),
-        NodeAttributeValue::String("username".to_string()),
+        NodeAttrVal::String("username".to_string()),
     );
 
-    input_attrs.insert("required".to_string(), NodeAttributeValue::True);
+    input_attrs.insert("required".to_string(), NodeAttrVal::True);
 
     let mut button_attrs = HashMap::new();
 
     button_attrs.insert(
         "type".to_string(),
-        NodeAttributeValue::String("submit".to_string()),
+        NodeAttrVal::String("submit".to_string()),
     );
 
     button_attrs.insert(
         "class".to_string(),
-        NodeAttributeValue::String("btn primary".to_string()),
+        NodeAttrVal::String("btn primary".to_string()),
     );
 
     let nodes = vec![Node::block(
