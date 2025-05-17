@@ -8,7 +8,7 @@ struct IrNode {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum NodeAttributeValue {
+pub enum NodeAttrVal {
     /// Represents a string HTML attribute, i.e:
     ///
     /// ```html
@@ -24,14 +24,14 @@ pub enum NodeAttributeValue {
     True,
 }
 
-impl NodeAttributeValue {
-    /// Simplifies the creation of a `NodeAttributeValue::String` variant by providing
+impl NodeAttrVal {
+    /// Simplifies the creation of a `NodeAttrVal::String` variant by providing
     /// a shorthand function:
     ///
     /// ```rust
     /// use dompa::*;
     ///
-    /// NodeAttributeValue::string("value");
+    /// NodeAttrVal::string("value");
     /// ```
     ///
     /// The verbose variant looks like this:
@@ -39,10 +39,10 @@ impl NodeAttributeValue {
     /// ```rust
     /// use dompa::*;
     ///
-    /// NodeAttributeValue::String(String::from("value"));
+    /// NodeAttrVal::String(String::from("value"));
     /// ```
     pub fn string(value: impl Into<String>) -> Self {
-        NodeAttributeValue::String(value.into())
+        NodeAttrVal::String(value.into())
     }
 }
 
@@ -57,7 +57,7 @@ pub enum Node {
 #[derive(Debug, Clone, PartialEq)]
 pub struct BlockNode {
     pub name: String,
-    pub attributes: HashMap<String, NodeAttributeValue>,
+    pub attributes: HashMap<String, NodeAttrVal>,
     pub children: Vec<Node>,
 }
 
@@ -69,7 +69,7 @@ pub struct TextNode {
 #[derive(Debug, Clone, PartialEq)]
 pub struct VoidNode {
     pub name: String,
-    pub attributes: HashMap<String, NodeAttributeValue>,
+    pub attributes: HashMap<String, NodeAttrVal>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -104,7 +104,7 @@ impl Node {
     /// ```
     pub fn block(
         name: impl Into<String>,
-        attributes: HashMap<String, NodeAttributeValue>,
+        attributes: HashMap<String, NodeAttrVal>,
         children: Vec<Node>,
     ) -> Self {
         Node::Block(BlockNode {
@@ -171,7 +171,7 @@ impl Node {
     ///   attributes: HashMap::new()
     /// });
     /// ```
-    pub fn void(name: impl Into<String>, attributes: HashMap<String, NodeAttributeValue>) -> Self {
+    pub fn void(name: impl Into<String>, attributes: HashMap<String, NodeAttrVal>) -> Self {
         Node::Void(VoidNode {
             name: name.into(),
             attributes,
@@ -351,7 +351,7 @@ fn attrs_str_from_coords(html: &str, coords: (usize, usize)) -> Option<String> {
     Some(raw_tag[start..end].to_string())
 }
 
-fn attrs_from_coords(html: &str, coords: (usize, usize)) -> HashMap<String, NodeAttributeValue> {
+fn attrs_from_coords(html: &str, coords: (usize, usize)) -> HashMap<String, NodeAttrVal> {
     let mut attrs = HashMap::new();
 
     let Some(attrs_str) = attrs_str_from_coords(&html, coords) else {
@@ -369,7 +369,7 @@ fn attrs_from_coords(html: &str, coords: (usize, usize)) -> HashMap<String, Node
             // handle whitespace after attribute name or value
             c if c.is_whitespace() => {
                 if !current_name.is_empty() {
-                    attrs.insert(current_name.clone(), NodeAttributeValue::True);
+                    attrs.insert(current_name.clone(), NodeAttrVal::True);
                     current_name.clear();
                 }
             }
@@ -379,7 +379,7 @@ fn attrs_from_coords(html: &str, coords: (usize, usize)) -> HashMap<String, Node
                 if let Some('"') = chars.next() {
                     let value: String = chars.by_ref().take_while(|&c| c != '"').collect();
 
-                    attrs.insert(current_name.clone(), NodeAttributeValue::String(value));
+                    attrs.insert(current_name.clone(), NodeAttrVal::String(value));
                     current_name.clear();
 
                     // skip the space after the closing quote, if present
@@ -396,7 +396,7 @@ fn attrs_from_coords(html: &str, coords: (usize, usize)) -> HashMap<String, Node
 
     // handle last attribute, if it's a boolean one
     if !current_name.is_empty() {
-        attrs.insert(current_name, NodeAttributeValue::True);
+        attrs.insert(current_name, NodeAttrVal::True);
     }
 
     attrs
@@ -460,15 +460,14 @@ pub fn traverse(nodes: Vec<Node>, callable: fn(node: &Node) -> Option<Node>) -> 
     result
 }
 
-fn attrs_to_html_str(attrs: HashMap<String, NodeAttributeValue>) -> String {
+fn attrs_to_html_str(attrs: HashMap<String, NodeAttrVal>) -> String {
     let mut sorted_attrs: Vec<_> = attrs.into_iter().collect();
     sorted_attrs.sort_by(|(a, _), (b, _)| a.cmp(b));
 
     sorted_attrs.into_iter().fold(String::new(), |acc, attr| {
         let html = match attr {
-            (key, NodeAttributeValue::True) => key,
-
-            (key, NodeAttributeValue::String(val)) => format!("{}=\"{}\"", key, val),
+            (key, NodeAttrVal::True) => key,
+            (key, NodeAttrVal::String(val)) => format!("{}=\"{}\"", key, val),
         };
 
         format!("{} {}", acc, html).to_string()
@@ -479,6 +478,7 @@ fn attrs_to_html_str(attrs: HashMap<String, NodeAttributeValue>) -> String {
 pub fn to_html(nodes: Vec<Node>) -> String {
     nodes.into_iter().fold(String::new(), |acc, node| {
         let html = match node {
+            // Block nodes
             Node::Block(block_node) => {
                 format!(
                     "<{name}{attrs}>{content}</{name}>",
@@ -488,8 +488,10 @@ pub fn to_html(nodes: Vec<Node>) -> String {
                 )
             }
 
+            // Text nodes
             Node::Text(text_node) => text_node.value,
 
+            // Void nodes
             Node::Void(void_node) => {
                 format!(
                     "<{name}{attrs}>",
@@ -498,6 +500,7 @@ pub fn to_html(nodes: Vec<Node>) -> String {
                 )
             }
 
+            // Fragment nodes
             Node::Fragment(fragment_node) => to_html(fragment_node.children),
         };
 
