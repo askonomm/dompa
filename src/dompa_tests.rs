@@ -1,5 +1,5 @@
 use crate::dompa::*;
-use std::collections::HashMap;
+use std::collections::{BTreeMap};
 
 #[test]
 fn test_nodes_simple_text() {
@@ -184,7 +184,7 @@ fn test_traverse_modify_all_nodes() {
     let transform = |node: &Node| -> Option<Node> {
         match node {
             Node::Block(block) => {
-                let mut attrs = HashMap::new();
+                let mut attrs = BTreeMap::new();
 
                 attrs.insert("data-transformed".to_string(), NodeAttrVal::True);
 
@@ -196,7 +196,7 @@ fn test_traverse_modify_all_nodes() {
             }
             Node::Text(text) => Some(Node::text(format!("TRANSFORMED: {}", text.value))),
             Node::Void(void) => {
-                let mut attrs = HashMap::new();
+                let mut attrs = BTreeMap::new();
 
                 attrs.insert("data-transformed".to_string(), NodeAttrVal::True);
 
@@ -338,7 +338,7 @@ fn test_constructor_methods() {
     let simple_void = Node::simple_void("img");
 
     // Test with attributes
-    let mut attrs = HashMap::new();
+    let mut attrs = BTreeMap::new();
 
     attrs.insert(
         "class".to_string(),
@@ -411,7 +411,7 @@ fn test_to_html_simple_void_node() {
 
 #[test]
 fn test_to_html_void_node_with_attributes() {
-    let mut attrs = HashMap::new();
+    let mut attrs = BTreeMap::new();
 
     attrs.insert(
         "src".to_string(),
@@ -437,7 +437,7 @@ fn test_to_html_simple_block_node() {
 
 #[test]
 fn test_to_html_block_node_with_attributes() {
-    let mut attrs = HashMap::new();
+    let mut attrs = BTreeMap::new();
 
     attrs.insert(
         "class".to_string(),
@@ -482,7 +482,7 @@ fn test_to_html_fragment_node() {
 
 #[test]
 fn test_to_html_mixed_node_types() {
-    let mut attrs = HashMap::new();
+    let mut attrs = BTreeMap::new();
 
     attrs.insert("class".to_string(), NodeAttrVal::String("btn".to_string()));
 
@@ -528,7 +528,7 @@ fn test_to_html_multiple_root_nodes() {
 
 #[test]
 fn test_to_html_boolean_attributes() {
-    let mut attrs = HashMap::new();
+    let mut attrs = BTreeMap::new();
 
     attrs.insert("required".to_string(), NodeAttrVal::True);
     attrs.insert("readonly".to_string(), NodeAttrVal::True);
@@ -540,7 +540,7 @@ fn test_to_html_boolean_attributes() {
 
 #[test]
 fn test_to_html_complex_html_structure() {
-    let mut form_attrs = HashMap::new();
+    let mut form_attrs = BTreeMap::new();
 
     form_attrs.insert(
         "action".to_string(),
@@ -552,7 +552,7 @@ fn test_to_html_complex_html_structure() {
         NodeAttrVal::String("post".to_string()),
     );
 
-    let mut input_attrs = HashMap::new();
+    let mut input_attrs = BTreeMap::new();
 
     input_attrs.insert("type".to_string(), NodeAttrVal::String("text".to_string()));
 
@@ -563,7 +563,7 @@ fn test_to_html_complex_html_structure() {
 
     input_attrs.insert("required".to_string(), NodeAttrVal::True);
 
-    let mut button_attrs = HashMap::new();
+    let mut button_attrs = BTreeMap::new();
 
     button_attrs.insert(
         "type".to_string(),
@@ -589,5 +589,203 @@ fn test_to_html_complex_html_structure() {
     assert_eq!(
         to_html(nodes),
         "<form action=\"/submit\" method=\"post\"><label>Username:</label><input name=\"username\" required type=\"text\"><br><button class=\"btn primary\" type=\"submit\">Submit</button></form>"
+    );
+}
+
+#[test]
+fn test_to_json_simple_text_node() {
+    let nodes = vec![Node::text("Hello, world!")];
+
+    assert_eq!(to_json(nodes), "[{\"value\":\"Hello, world!\"}]");
+}
+
+
+#[test]
+fn test_to_json_simple_void_node() {
+    let nodes = vec![Node::simple_void("br")];
+
+    assert_eq!(to_json(nodes), "[{\"name\":\"br\",\"attributes\":{}}]");
+}
+
+#[test]
+fn test_to_json_void_node_with_attributes() {
+    let mut attrs = BTreeMap::new();
+
+    attrs.insert(
+        "src".to_string(),
+        NodeAttrVal::String("image.jpg".to_string()),
+    );
+
+    attrs.insert(
+        "alt".to_string(),
+        NodeAttrVal::String("An image".to_string()),
+    );
+
+    let nodes = vec![Node::void("img", attrs)];
+
+    assert_eq!(to_json(nodes), "[{\"name\":\"img\",\"attributes\":{\"alt\":\"An image\",\"src\":\"image.jpg\"}}]");
+}
+
+#[test]
+fn test_to_json_simple_block_node() {
+    let nodes = vec![Node::simple_block("div", vec![Node::text("Content")])];
+
+    assert_eq!(to_json(nodes), "[{\"name\":\"div\",\"attributes\":{},\"children\":[{\"value\":\"Content\"}]}]");
+}
+
+#[test]
+fn test_to_json_block_node_with_attributes() {
+    let mut attrs = BTreeMap::new();
+
+    attrs.insert(
+        "class".to_string(),
+        NodeAttrVal::String("container".to_string()),
+    );
+    attrs.insert("id".to_string(), NodeAttrVal::String("main".to_string()));
+
+    let nodes = vec![Node::block("div", attrs, vec![Node::text("Content")])];
+
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"div\",\"attributes\":{\"class\":\"container\",\"id\":\"main\"},\"children\":[{\"value\":\"Content\"}]}]"
+    );
+}
+
+#[test]
+fn test_to_json_nested_block_nodes() {
+    let nodes = vec![Node::simple_block(
+        "section",
+        vec![
+            Node::simple_block("h1", vec![Node::text("Title")]),
+            Node::simple_block("p", vec![Node::text("Paragraph")]),
+        ],
+    )];
+
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"section\",\"attributes\":{},\"children\":[{\"name\":\"h1\",\"attributes\":{},\"children\":[{\"value\":\"Title\"}]},{\"name\":\"p\",\"attributes\":{},\"children\":[{\"value\":\"Paragraph\"}]}]}]"
+    );
+}
+
+#[test]
+fn test_to_json_fragment_node() {
+    let nodes = vec![Node::fragment(vec![
+        Node::text("Text before"),
+        Node::simple_void("br"),
+        Node::text("Text after"),
+    ])];
+
+    assert_eq!(to_json(nodes), "[{\"children\":[{\"value\":\"Text before\"},{\"name\":\"br\",\"attributes\":{}},{\"value\":\"Text after\"}]}]");
+}
+
+#[test]
+fn test_to_json_mixed_node_types() {
+    let mut attrs = BTreeMap::new();
+
+    attrs.insert("class".to_string(), NodeAttrVal::String("btn".to_string()));
+
+    attrs.insert("disabled".to_string(), NodeAttrVal::True);
+
+    let nodes = vec![Node::simple_block(
+        "div",
+        vec![
+            Node::text("Hello "),
+            Node::block("span", attrs.clone(), vec![Node::text("World")]),
+            Node::text("!"),
+            Node::simple_void("br"),
+            Node::simple_block("p", vec![Node::text("Paragraph")]),
+        ],
+    )];
+
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"div\",\"attributes\":{},\"children\":[{\"value\":\"Hello \"},{\"name\":\"span\",\"attributes\":{\"class\":\"btn\",\"disabled\":true},\"children\":[{\"value\":\"World\"}]},{\"value\":\"!\"},{\"name\":\"br\",\"attributes\":{}},{\"name\":\"p\",\"attributes\":{},\"children\":[{\"value\":\"Paragraph\"}]}]}]"
+    );
+}
+
+#[test]
+fn test_to_json_empty_nodes() {
+    let nodes = vec![];
+
+    assert_eq!(to_json(nodes), "[]");
+}
+
+#[test]
+fn test_to_json_multiple_root_nodes() {
+    let nodes = vec![
+        Node::simple_block("header", vec![Node::text("Header")]),
+        Node::simple_block("main", vec![Node::text("Content")]),
+        Node::simple_block("footer", vec![Node::text("Footer")]),
+    ];
+
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"header\",\"attributes\":{},\"children\":[{\"value\":\"Header\"}]},{\"name\":\"main\",\"attributes\":{},\"children\":[{\"value\":\"Content\"}]},{\"name\":\"footer\",\"attributes\":{},\"children\":[{\"value\":\"Footer\"}]}]"
+    );
+}
+
+#[test]
+fn test_to_json_boolean_attributes() {
+    let mut attrs = BTreeMap::new();
+
+    attrs.insert("required".to_string(), NodeAttrVal::True);
+    attrs.insert("readonly".to_string(), NodeAttrVal::True);
+
+    let nodes = vec![Node::void("input", attrs)];
+
+    assert_eq!(to_json(nodes), "[{\"name\":\"input\",\"attributes\":{\"readonly\":true,\"required\":true}}]");
+}
+
+#[test]
+fn test_to_json_complex_html_structure() {
+    let mut form_attrs = BTreeMap::new();
+
+    form_attrs.insert(
+        "action".to_string(),
+        NodeAttrVal::String("/submit".to_string()),
+    );
+
+    form_attrs.insert(
+        "method".to_string(),
+        NodeAttrVal::String("post".to_string()),
+    );
+
+    let mut input_attrs = BTreeMap::new();
+
+    input_attrs.insert("type".to_string(), NodeAttrVal::String("text".to_string()));
+
+    input_attrs.insert(
+        "name".to_string(),
+        NodeAttrVal::String("username".to_string()),
+    );
+
+    input_attrs.insert("required".to_string(), NodeAttrVal::True);
+
+    let mut button_attrs = BTreeMap::new();
+
+    button_attrs.insert(
+        "type".to_string(),
+        NodeAttrVal::String("submit".to_string()),
+    );
+
+    button_attrs.insert(
+        "class".to_string(),
+        NodeAttrVal::String("btn primary".to_string()),
+    );
+
+    let nodes = vec![Node::block(
+        "form",
+        form_attrs,
+        vec![
+            Node::simple_block("label", vec![Node::text("Username:")]),
+            Node::void("input", input_attrs),
+            Node::simple_void("br"),
+            Node::block("button", button_attrs, vec![Node::text("Submit")]),
+        ],
+    )];
+
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"form\",\"attributes\":{\"action\":\"/submit\",\"method\":\"post\"},\"children\":[{\"name\":\"label\",\"attributes\":{},\"children\":[{\"value\":\"Username:\"}]},{\"name\":\"input\",\"attributes\":{\"name\":\"username\",\"required\":true,\"type\":\"text\"}},{\"name\":\"br\",\"attributes\":{}},{\"name\":\"button\",\"attributes\":{\"class\":\"btn primary\",\"type\":\"submit\"},\"children\":[{\"value\":\"Submit\"}]}]}]"
     );
 }

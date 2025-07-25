@@ -23,7 +23,7 @@ use dompa;
 fn main() {
     let html = String::from("<div>Hello, World</div>");
     let nodes = dompa::nodes(html);
-    
+
     /* dbg! output of nodes:
     [
         Block(
@@ -41,7 +41,7 @@ fn main() {
         ),
     ]
     */
-        
+
     // Turn the node tree back into HTML
     let html_output = dompa::to_html(nodes);
 }
@@ -253,8 +253,13 @@ The `to_html` function serializes the node tree back to an HTML string:
 let html = dompa::to_html(nodes);
 ```
 
-Note that since the attributes are stored in a `HashMap`, their order is not guaranteed to be the same as in your HTML. However, to not have
-unpredictable results, Dompa sorts the attributes alphabetically in the output.
+### `to_json` function
+
+The `to_json` function serializes the node tree into a JSON string:
+
+```rust
+let json = dompa::to_json(nodes);
+```
 
 ## Working with Attributes
 

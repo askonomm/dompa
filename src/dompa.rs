@@ -1,4 +1,5 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
+use serde::{Deserialize, Serialize, Serializer};
 
 #[derive(Debug, Clone)]
 struct IrNode {
@@ -7,7 +8,8 @@ struct IrNode {
     children: Vec<IrNode>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
 pub enum NodeAttrVal {
     /// Represents a string HTML attribute, i.e:
     ///
@@ -22,6 +24,18 @@ pub enum NodeAttrVal {
     /// <element checked>
     /// ```
     True,
+}
+
+impl Serialize for NodeAttrVal {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where 
+        S: Serializer,
+    {
+        match self {
+            NodeAttrVal::String(str) => serializer.serialize_str(str),
+            NodeAttrVal::True => serializer.serialize_bool(true),
+        }
+    }
 }
 
 impl NodeAttrVal {
@@ -46,7 +60,8 @@ impl NodeAttrVal {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum Node {
     Block(BlockNode),
     Text(TextNode),
@@ -54,25 +69,25 @@ pub enum Node {
     Fragment(FragmentNode),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BlockNode {
     pub name: String,
-    pub attributes: HashMap<String, NodeAttrVal>,
+    pub attributes: BTreeMap<String, NodeAttrVal>,
     pub children: Vec<Node>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TextNode {
     pub value: String,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VoidNode {
     pub name: String,
-    pub attributes: HashMap<String, NodeAttrVal>,
+    pub attributes: BTreeMap<String, NodeAttrVal>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FragmentNode {
     pub children: Vec<Node>,
 }
@@ -85,26 +100,26 @@ impl Node {
     ///
     /// ```rust
     /// use dompa::*;
-    /// use std::collections::HashMap;
+    /// use std::collections::BTreeMap;
     ///
-    /// Node::block("div", HashMap::new(), vec![]);
+    /// Node::block("div", BTreeMap::new(), vec![]);
     /// ```
     ///
     /// The verbose variant looks like this:
     ///
     /// ```rust
     /// use dompa::*;
-    /// use std::collections::HashMap;
+    /// use std::collections::BTreeMap;
     ///
     /// Node::Block(BlockNode {
     ///   name: String::from("div"),
-    ///   attributes: HashMap::new(),
+    ///   attributes: BTreeMap::new(),
     ///   children: vec![]
     /// });
     /// ```
     pub fn block(
         name: impl Into<String>,
-        attributes: HashMap<String, NodeAttrVal>,
+        attributes: BTreeMap<String, NodeAttrVal>,
         children: Vec<Node>,
     ) -> Self {
         Node::Block(BlockNode {
@@ -123,7 +138,7 @@ impl Node {
     /// Node::simple_block("div", vec![]);
     /// ```
     pub fn simple_block(name: impl Into<String>, children: Vec<Node>) -> Self {
-        Node::block(name, HashMap::new(), children)
+        Node::block(name, BTreeMap::new(), children)
     }
 
     /// Simplifies the creation of a `TextNode` by providing a shorthand
@@ -155,23 +170,23 @@ impl Node {
     ///
     /// ```rust
     /// use dompa::*;
-    /// use std::collections::HashMap;
+    /// use std::collections::BTreeMap;
     ///
-    /// Node::void("img", HashMap::new());
+    /// Node::void("img", BTreeMap::new());
     /// ```
     ///
     /// The verbose variant looks like this:
     ///
     /// ```rust
     /// use dompa::*;
-    /// use std::collections::HashMap;
+    /// use std::collections::BTreeMap;
     ///
     /// Node::Void(VoidNode {
     ///   name: String::from("img"),
-    ///   attributes: HashMap::new()
+    ///   attributes: BTreeMap::new()
     /// });
     /// ```
-    pub fn void(name: impl Into<String>, attributes: HashMap<String, NodeAttrVal>) -> Self {
+    pub fn void(name: impl Into<String>, attributes: BTreeMap<String, NodeAttrVal>) -> Self {
         Node::Void(VoidNode {
             name: name.into(),
             attributes,
@@ -187,7 +202,7 @@ impl Node {
     /// Node::simple_void("img");
     /// ```
     pub fn simple_void(name: impl Into<String>) -> Self {
-        Node::void(name, HashMap::new())
+        Node::void(name, BTreeMap::new())
     }
 
     /// Simplifies the creation of a `FragmentNode` by providing a shrothand
@@ -351,8 +366,8 @@ fn attrs_str_from_coords(html: &str, coords: (usize, usize)) -> Option<String> {
     Some(raw_tag[start..end].to_string())
 }
 
-fn attrs_from_coords(html: &str, coords: (usize, usize)) -> HashMap<String, NodeAttrVal> {
-    let mut attrs = HashMap::new();
+fn attrs_from_coords(html: &str, coords: (usize, usize)) -> BTreeMap<String, NodeAttrVal> {
+    let mut attrs = BTreeMap::new();
 
     let Some(attrs_str) = attrs_str_from_coords(&html, coords) else {
         return attrs;
@@ -460,11 +475,8 @@ pub fn traverse(nodes: Vec<Node>, callable: fn(node: &Node) -> Option<Node>) -> 
     result
 }
 
-fn attrs_to_html_str(attrs: HashMap<String, NodeAttrVal>) -> String {
-    let mut sorted_attrs: Vec<_> = attrs.into_iter().collect();
-    sorted_attrs.sort_by(|(a, _), (b, _)| a.cmp(b));
-
-    sorted_attrs.into_iter().fold(String::new(), |acc, attr| {
+fn attrs_to_html_str(attrs: BTreeMap<String, NodeAttrVal>) -> String {
+    attrs.into_iter().fold(String::new(), |acc, attr| {
         let html = match attr {
             (key, NodeAttrVal::True) => key,
             (key, NodeAttrVal::String(val)) => format!("{}=\"{}\"", key, val),
@@ -506,4 +518,9 @@ pub fn to_html(nodes: Vec<Node>) -> String {
 
         format!("{}{}", acc, html)
     })
+}
+
+/// Transform the given `nodes` node tree into a JSON string.
+pub fn to_json(nodes: Vec<Node>) -> String {
+    serde_json::to_string(&nodes).unwrap_or(String::from("{}"))
 }
