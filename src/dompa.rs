@@ -1,5 +1,5 @@
-use std::collections::{BTreeMap, HashSet};
 use serde::{Deserialize, Serialize, Serializer};
+use std::collections::{BTreeMap, HashSet};
 
 #[derive(Debug, Clone)]
 struct IrNode {
@@ -28,7 +28,7 @@ pub enum NodeAttrVal {
 
 impl Serialize for NodeAttrVal {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where 
+    where
         S: Serializer,
     {
         match self {
@@ -450,24 +450,30 @@ pub fn nodes(html: String) -> Vec<Node> {
 /// Traverses the given `nodes` node tree and returns an updated tree based
 /// on `callable`. The `callable` must return a `Node` if you wish to either
 /// replace the node or update it, and return `None` if you wish to remove it.
-pub fn traverse(nodes: Vec<Node>, callable: fn(node: &Node) -> Option<Node>) -> Vec<Node> {
+pub fn traverse<F>(nodes: Vec<Node>, mut callable: F) -> Vec<Node>
+where
+    F: for<'r> FnMut(&'r Node) -> Option<Node>,
+{
+    traverse_inner(nodes, &mut callable)
+}
+
+fn traverse_inner<F>(nodes: Vec<Node>, callable: &mut F) -> Vec<Node>
+where
+    F: for<'r> FnMut(&'r Node) -> Option<Node>,
+{
     let mut result = Vec::new();
 
     for node in nodes {
-        if let Some(transformed_node) = callable(&node) {
-            match transformed_node {
-                Node::Block(mut block_node) => {
-                    block_node.children = traverse(block_node.children, callable);
-                    result.push(Node::Block(block_node));
+        if let Some(t) = callable(&node) {
+            match t {
+                Node::Block(mut blk) => {
+                    blk.children = traverse_inner(blk.children, callable);
+                    result.push(Node::Block(blk));
                 }
-
-                Node::Fragment(fragment_node) => {
-                    result.extend(traverse(fragment_node.children, callable));
+                Node::Fragment(frag) => {
+                    result.extend(traverse_inner(frag.children, callable));
                 }
-
-                Node::Text(_) | Node::Void(_) => {
-                    result.push(transformed_node);
-                }
+                Node::Text(_) | Node::Void(_) => result.push(t),
             }
         }
     }
