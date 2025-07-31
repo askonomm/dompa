@@ -10,7 +10,7 @@ Add Dompa to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-dompa = "1.1.1"
+dompa = "1.1.2"
 ```
 
 ## Usage
