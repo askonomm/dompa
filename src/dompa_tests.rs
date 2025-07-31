@@ -29,8 +29,6 @@ fn test_nodes_simple_tag() {
 
         if let Node::Text(text_node) = &block_node.children[0] {
             assert_eq!(text_node.value, "Hello");
-        } else {
-            panic!("Expected child to be a text node");
         }
     }
 }
@@ -65,7 +63,6 @@ fn test_nodes_with_attributes() {
     let result = nodes(html);
 
     if let Node::Block(block_node) = &result[0] {
-        dbg!(&block_node.attributes);
         assert_eq!(block_node.attributes.len(), 2);
 
         assert_eq!(
@@ -77,8 +74,6 @@ fn test_nodes_with_attributes() {
             block_node.attributes.get("id"),
             Some(&NodeAttrVal::string("main"))
         );
-    } else {
-        panic!("Expected a block node");
     }
 }
 
@@ -99,8 +94,6 @@ fn test_nodes_with_attributes_no_quotes() {
             block_node.attributes.get("id"),
             Some(&NodeAttrVal::string("main"))
         );
-    } else {
-        panic!("Expected a block node");
     }
 }
 
@@ -131,8 +124,6 @@ fn test_nodes_with_attributes_no_quotes_and_spaces() {
             block_node.attributes.get("something"),
             Some(&NodeAttrVal::True)
         );
-    } else {
-        panic!("Expected a block node");
     }
 }
 
@@ -148,8 +139,6 @@ fn test_nodes_boolean_attribute() {
             block_node.attributes.get("disabled"),
             Some(&NodeAttrVal::True)
         );
-    } else {
-        panic!("Expected a block node");
     }
 }
 
@@ -171,8 +160,6 @@ fn test_nodes_nested_tags() {
             if let Node::Text(text_node) = &p_node.children[0] {
                 assert_eq!(text_node.value, "Paragraph");
             }
-        } else {
-            panic!("Expected first child to be a p block node");
         }
 
         if let Node::Block(span_node) = &block_node.children[1] {
@@ -182,8 +169,6 @@ fn test_nodes_nested_tags() {
             if let Node::Text(text_node) = &span_node.children[0] {
                 assert_eq!(text_node.value, "Span");
             }
-        } else {
-            panic!("Expected second child to be a span block node");
         }
     }
 }
@@ -198,16 +183,12 @@ fn test_nodes_mixed_content() {
 
         if let Node::Text(text_node) = &block_node.children[0] {
             assert_eq!(text_node.value, "Text before ");
-        } else {
-            panic!("Expected first child to be a text node");
         }
 
         assert!(matches!(block_node.children[1], Node::Block(_)));
 
         if let Node::Text(text_node) = &block_node.children[2] {
             assert_eq!(text_node.value, " text after");
-        } else {
-            panic!("Expected third child to be a text node");
         }
     }
 }
@@ -370,8 +351,6 @@ fn test_traverse_fragment_replacement() {
             if let Node::Text(text) = &span1.children[0] {
                 assert_eq!(text.value, "First");
             }
-        } else {
-            panic!("Expected first child to be a span block");
         }
 
         if let Node::Block(span2) = &div.children[1] {
@@ -380,8 +359,6 @@ fn test_traverse_fragment_replacement() {
             if let Node::Text(text) = &span2.children[0] {
                 assert_eq!(text.value, "Second");
             }
-        } else {
-            panic!("Expected second child to be a span block");
         }
     }
 }
@@ -406,23 +383,17 @@ fn test_constructor_methods() {
     // Validate the nodes
     if let Node::Text(text) = text_node {
         assert_eq!(text.value, "Hello");
-    } else {
-        panic!("Expected a text node");
     }
 
     if let Node::Block(block) = simple_block {
         assert_eq!(block.name, "div");
         assert_eq!(block.attributes.len(), 0);
         assert_eq!(block.children.len(), 1);
-    } else {
-        panic!("Expected a block node");
     }
 
     if let Node::Void(void) = simple_void {
         assert_eq!(void.name, "img");
         assert_eq!(void.attributes.len(), 0);
-    } else {
-        panic!("Expected a void node");
     }
 
     if let Node::Block(block) = block_with_attrs {
@@ -433,8 +404,6 @@ fn test_constructor_methods() {
             block.attributes.get("class"),
             Some(&NodeAttrVal::String("container".to_string()))
         );
-    } else {
-        panic!("Expected a block node");
     }
 
     if let Node::Void(void) = void_with_attrs {
@@ -445,8 +414,6 @@ fn test_constructor_methods() {
             void.attributes.get("class"),
             Some(&NodeAttrVal::String("container".to_string()))
         );
-    } else {
-        panic!("Expected a void node");
     }
 }
 
