@@ -61,7 +61,30 @@ fn test_nodes_void_tag() {
 
 #[test]
 fn test_nodes_with_attributes() {
-    let html = "<div class=\"container\" id=\"main\">Content</div>".to_string();
+    let html = "<div class=\"container\" id=\"main\">Content</div>";
+    let result = nodes(html);
+
+    if let Node::Block(block_node) = &result[0] {
+        dbg!(&block_node.attributes);
+        assert_eq!(block_node.attributes.len(), 2);
+
+        assert_eq!(
+            block_node.attributes.get("class"),
+            Some(&NodeAttrVal::string("container"))
+        );
+
+        assert_eq!(
+            block_node.attributes.get("id"),
+            Some(&NodeAttrVal::string("main"))
+        );
+    } else {
+        panic!("Expected a block node");
+    }
+}
+
+#[test]
+fn test_nodes_with_attributes_no_quotes() {
+    let html = "<div class=container id=main>Content</div>";
     let result = nodes(html);
 
     if let Node::Block(block_node) = &result[0] {
@@ -69,12 +92,44 @@ fn test_nodes_with_attributes() {
 
         assert_eq!(
             block_node.attributes.get("class"),
-            Some(&NodeAttrVal::String("container".to_string()))
+            Some(&NodeAttrVal::string("container"))
         );
 
         assert_eq!(
             block_node.attributes.get("id"),
-            Some(&NodeAttrVal::String("main".to_string()))
+            Some(&NodeAttrVal::string("main"))
+        );
+    } else {
+        panic!("Expected a block node");
+    }
+}
+
+#[test]
+fn test_nodes_with_attributes_no_quotes_and_spaces() {
+    let html = "<div class=container something other id=main>Content</div>";
+    let result = nodes(html);
+
+    if let Node::Block(block_node) = &result[0] {
+        assert_eq!(block_node.attributes.len(), 4);
+
+        assert_eq!(
+            block_node.attributes.get("class"),
+            Some(&NodeAttrVal::string("container"))
+        );
+
+        assert_eq!(
+            block_node.attributes.get("id"),
+            Some(&NodeAttrVal::string("main"))
+        );
+
+        assert_eq!(
+            block_node.attributes.get("other"),
+            Some(&NodeAttrVal::True)
+        );
+
+        assert_eq!(
+            block_node.attributes.get("something"),
+            Some(&NodeAttrVal::True)
         );
     } else {
         panic!("Expected a block node");

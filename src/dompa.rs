@@ -391,16 +391,18 @@ fn attrs_from_coords(html: &str, coords: (usize, usize)) -> BTreeMap<String, Nod
 
             // parse attribute value
             '=' => {
-                if let Some('"') = chars.next() {
+                if let Some('"') = chars.peek() {
+                    chars.next();
+                    
                     let value: String = chars.by_ref().take_while(|&c| c != '"').collect();
 
                     attrs.insert(current_name.clone(), NodeAttrVal::String(value));
                     current_name.clear();
+                } else {
+                    let value: String = chars.by_ref().take_while(|&c| !c.is_whitespace()).collect();
 
-                    // skip the space after the closing quote, if present
-                    if let Some(' ') = chars.peek() {
-                        chars.next();
-                    }
+                    attrs.insert(current_name.clone(), NodeAttrVal::String(value));
+                    current_name.clear();
                 }
             }
 
@@ -440,11 +442,12 @@ fn create_nodes(html: &str, ir_nodes: Vec<IrNode>) -> Vec<Node> {
 }
 
 /// Transforms a given `html` string into a node tree.
-pub fn nodes(html: String) -> Vec<Node> {
-    let ir_nodes = create_ir_nodes(&html);
+pub fn nodes(html: impl Into<String>) -> Vec<Node> {
+    let html_str = html.into();
+    let ir_nodes = create_ir_nodes(&html_str);
     let joined_ir_nodes = join_ir_nodes(ir_nodes);
 
-    return create_nodes(&html, joined_ir_nodes);
+    return create_nodes(&html_str, joined_ir_nodes);
 }
 
 /// Traverses the given `nodes` node tree and returns an updated tree based
