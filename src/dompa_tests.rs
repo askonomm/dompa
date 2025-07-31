@@ -1,5 +1,5 @@
 use crate::dompa::*;
-use std::collections::{BTreeMap};
+use std::collections::BTreeMap;
 
 #[test]
 fn test_nodes_simple_text() {
@@ -8,10 +8,7 @@ fn test_nodes_simple_text() {
 
     assert_eq!(result.len(), 1);
     assert!(matches!(result[0], Node::Text(_)));
-
-    if let Node::Text(text_node) = &result[0] {
-        assert_eq!(text_node.value, "Hello, world!");
-    }
+    assert!(matches!(result[0], Node::Text(ref n) if n.value == "Hello, world!"));
 }
 
 #[test]
@@ -21,16 +18,13 @@ fn test_nodes_simple_tag() {
 
     assert_eq!(result.len(), 1);
     assert!(matches!(result[0], Node::Block(_)));
-
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.name, "div");
-        assert_eq!(block_node.attributes.len(), 0);
-        assert_eq!(block_node.children.len(), 1);
-
-        if let Node::Text(text_node) = &block_node.children[0] {
-            assert_eq!(text_node.value, "Hello");
-        }
-    }
+    assert!(
+        matches!(&result[0], Node::Block(block) if block.name == "div"
+                && block.attributes.is_empty()
+                && block.children.len() == 1
+                && matches!(block.children[0], Node::Text(ref t) if t.value == "Hello")
+        )
+    );
 }
 
 #[test]
@@ -41,20 +35,16 @@ fn test_nodes_void_tag() {
     assert_eq!(result.len(), 1);
     assert!(matches!(result[0], Node::Void(_)));
 
-    if let Node::Void(void_node) = &result[0] {
-        assert_eq!(void_node.name, "img");
-        assert_eq!(void_node.attributes.len(), 2);
-
-        assert_eq!(
-            void_node.attributes.get("src"),
-            Some(&NodeAttrVal::String("test.jpg".to_string()))
-        );
-
-        assert_eq!(
-            void_node.attributes.get("alt"),
-            Some(&NodeAttrVal::String("Test".to_string()))
-        );
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Void(v)
+            if v.name == "img"
+            && v.attributes.len() == 2
+            && v.attributes.get("src")
+                == Some(&NodeAttrVal::String("test.jpg".to_string()))
+            && v.attributes.get("alt")
+                == Some(&NodeAttrVal::String("Test".to_string()))
+    ));
 }
 
 #[test]
@@ -62,19 +52,13 @@ fn test_nodes_with_attributes() {
     let html = "<div class=\"container\" id=\"main\">Content</div>";
     let result = nodes(html);
 
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.attributes.len(), 2);
-
-        assert_eq!(
-            block_node.attributes.get("class"),
-            Some(&NodeAttrVal::string("container"))
-        );
-
-        assert_eq!(
-            block_node.attributes.get("id"),
-            Some(&NodeAttrVal::string("main"))
-        );
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Block(b)
+            if b.attributes.len() == 2
+            && b.attributes.get("class") == Some(&NodeAttrVal::string("container"))
+            && b.attributes.get("id")    == Some(&NodeAttrVal::string("main"))
+    ));
 }
 
 #[test]
@@ -82,19 +66,13 @@ fn test_nodes_with_attributes_no_quotes() {
     let html = "<div class=container id=main>Content</div>";
     let result = nodes(html);
 
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.attributes.len(), 2);
-
-        assert_eq!(
-            block_node.attributes.get("class"),
-            Some(&NodeAttrVal::string("container"))
-        );
-
-        assert_eq!(
-            block_node.attributes.get("id"),
-            Some(&NodeAttrVal::string("main"))
-        );
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Block(b)
+            if b.attributes.len() == 2
+            && b.attributes.get("class") == Some(&NodeAttrVal::string("container"))
+            && b.attributes.get("id")    == Some(&NodeAttrVal::string("main"))
+    ));
 }
 
 #[test]
@@ -102,29 +80,15 @@ fn test_nodes_with_attributes_no_quotes_and_spaces() {
     let html = "<div class=container something other id=main>Content</div>";
     let result = nodes(html);
 
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.attributes.len(), 4);
-
-        assert_eq!(
-            block_node.attributes.get("class"),
-            Some(&NodeAttrVal::string("container"))
-        );
-
-        assert_eq!(
-            block_node.attributes.get("id"),
-            Some(&NodeAttrVal::string("main"))
-        );
-
-        assert_eq!(
-            block_node.attributes.get("other"),
-            Some(&NodeAttrVal::True)
-        );
-
-        assert_eq!(
-            block_node.attributes.get("something"),
-            Some(&NodeAttrVal::True)
-        );
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Block(b)
+            if b.attributes.len() == 4
+            && b.attributes.get("class")      == Some(&NodeAttrVal::string("container"))
+            && b.attributes.get("id")         == Some(&NodeAttrVal::string("main"))
+            && b.attributes.get("other")      == Some(&NodeAttrVal::True)
+            && b.attributes.get("something")  == Some(&NodeAttrVal::True)
+    ));
 }
 
 #[test]
@@ -132,14 +96,12 @@ fn test_nodes_boolean_attribute() {
     let html = "<button disabled>Click me</button>".to_string();
     let result = nodes(html);
 
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.attributes.len(), 1);
-
-        assert_eq!(
-            block_node.attributes.get("disabled"),
-            Some(&NodeAttrVal::True)
-        );
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Block(b)
+            if b.attributes.len() == 1
+            && b.attributes.get("disabled") == Some(&NodeAttrVal::True)
+    ));
 }
 
 #[test]
@@ -148,29 +110,32 @@ fn test_nodes_nested_tags() {
     let result = nodes(html);
 
     assert_eq!(result.len(), 1);
-
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.name, "div");
-        assert_eq!(block_node.children.len(), 2);
-
-        if let Node::Block(p_node) = &block_node.children[0] {
-            assert_eq!(p_node.name, "p");
-            assert_eq!(p_node.children.len(), 1);
-
-            if let Node::Text(text_node) = &p_node.children[0] {
-                assert_eq!(text_node.value, "Paragraph");
-            }
-        }
-
-        if let Node::Block(span_node) = &block_node.children[1] {
-            assert_eq!(span_node.name, "span");
-            assert_eq!(span_node.children.len(), 1);
-
-            if let Node::Text(text_node) = &span_node.children[0] {
-                assert_eq!(text_node.value, "Span");
-            }
-        }
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Block(div)
+            if div.name == "div"
+            && div.children.len() == 2
+            && matches!(
+                &div.children[0],
+                Node::Block(p)
+                    if p.name == "p"
+                    && p.children.len() == 1
+                    && matches!(
+                        &p.children[0],
+                        Node::Text(t) if t.value == "Paragraph"
+                    )
+            )
+            && matches!(
+                &div.children[1],
+                Node::Block(span)
+                    if span.name == "span"
+                    && span.children.len() == 1
+                    && matches!(
+                        &span.children[0],
+                        Node::Text(t) if t.value == "Span"
+                    )
+            )
+    ));
 }
 
 #[test]
@@ -178,19 +143,14 @@ fn test_nodes_mixed_content() {
     let html = "<div>Text before <span>inside</span> text after</div>".to_string();
     let result = nodes(html);
 
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.children.len(), 3);
-
-        if let Node::Text(text_node) = &block_node.children[0] {
-            assert_eq!(text_node.value, "Text before ");
-        }
-
-        assert!(matches!(block_node.children[1], Node::Block(_)));
-
-        if let Node::Text(text_node) = &block_node.children[2] {
-            assert_eq!(text_node.value, " text after");
-        }
-    }
+    assert!(matches!(
+        &result[0],
+        Node::Block(b)
+            if b.children.len() == 3
+            && matches!(&b.children[0], Node::Text(t) if t.value == "Text before ")
+            && matches!(b.children[1], Node::Block(_))
+            && matches!(&b.children[2], Node::Text(t) if t.value == " text after")
+    ));
 }
 
 #[test]
@@ -201,124 +161,97 @@ fn test_nodes_multiple_top_level() {
     assert_eq!(result.len(), 2);
     assert!(matches!(result[0], Node::Block(_)));
     assert!(matches!(result[1], Node::Block(_)));
-
-    if let Node::Block(block_node) = &result[0] {
-        assert_eq!(block_node.name, "div");
-    }
-
-    if let Node::Block(block_node) = &result[1] {
-        assert_eq!(block_node.name, "p");
-    }
+    assert!(matches!(&result[0], Node::Block(b) if b.name == "div"));
+    assert!(matches!(&result[1], Node::Block(b) if b.name == "p"));
 }
 
 #[test]
 fn test_traverse_modify_all_nodes() {
-    let html = "<div><p>Text</p><img src=\"test.jpg\"></div>".to_string();
-    let parsed_nodes = nodes(html);
+    let html = "<div><p>Text</p><img src=\"test.jpg\"></div>";
+    let parsed = nodes(html.to_string());
 
-    // wrap all nodes in a span
+    // add data-transformed="true" or prefix text
     let transform = |node: &Node| -> Option<Node> {
-        match node {
-            Node::Block(block) => {
-                let mut attrs = BTreeMap::new();
+        let add_flag = |mut attrs: BTreeMap<String, NodeAttrVal>| {
+            attrs.insert("data-transformed".into(), NodeAttrVal::True);
+            attrs
+        };
 
-                attrs.insert("data-transformed".to_string(), NodeAttrVal::True);
-
-                Some(Node::block(
-                    block.name.clone(),
-                    attrs,
-                    block.children.clone(),
-                ))
-            }
-            Node::Text(text) => Some(Node::text(format!("TRANSFORMED: {}", text.value))),
-            Node::Void(void) => {
-                let mut attrs = BTreeMap::new();
-
-                attrs.insert("data-transformed".to_string(), NodeAttrVal::True);
-
-                for (k, v) in &void.attributes {
-                    attrs.insert(k.clone(), v.clone());
-                }
-
-                Some(Node::void(void.name.clone(), attrs))
-            }
-            Node::Fragment(_) => Some(node.clone()),
-        }
+        Some(match node {
+            Node::Block(b) => Node::block(
+                b.name.clone(),
+                add_flag(b.attributes.clone()),
+                b.children.clone(),
+            ),
+            Node::Void(v) => Node::void(v.name.clone(), add_flag(v.attributes.clone())),
+            Node::Text(t) => Node::text(format!("TRANSFORMED: {}", t.value)),
+            _ => node.clone(),
+        })
     };
 
-    let result = traverse(parsed_nodes, transform);
+    let result = traverse(parsed, transform);
 
-    // Check that all nodes have been transformed
-    fn check_transformed(nodes: &[Node]) {
-        for node in nodes {
-            match node {
-                Node::Block(block) => {
-                    assert!(block.attributes.contains_key("data-transformed"));
-                    check_transformed(&block.children);
-                }
-                Node::Text(text) => {
-                    assert!(text.value.starts_with("TRANSFORMED: "));
-                }
-                Node::Void(void) => {
-                    assert!(void.attributes.contains_key("data-transformed"));
-                }
-                Node::Fragment(fragment) => {
-                    check_transformed(&fragment.children);
-                }
-            }
-        }
-    }
-
-    check_transformed(&result);
+    assert!(matches!(
+        &result[..],
+        [Node::Block(div)]
+            if div.attributes.get("data-transformed") == Some(&NodeAttrVal::True)
+            && div.children.len() == 2
+            && matches!(
+                &div.children[0],
+                Node::Block(p)
+                    if p.attributes.get("data-transformed") == Some(&NodeAttrVal::True)
+                    && matches!(
+                        &p.children[..],
+                        [Node::Text(t)] if t.value == "TRANSFORMED: Text"
+                    )
+            )
+            && matches!(
+                &div.children[1],
+                Node::Void(img)
+                    if img.attributes.get("data-transformed") == Some(&NodeAttrVal::True)
+                    && img.attributes.get("src") == Some(&NodeAttrVal::String("test.jpg".into()))
+            )
+    ));
 }
 
 #[test]
 fn test_traverse_filter_nodes() {
-    let html = "<div><p>Keep</p><span>Remove</span><img src=\"keep.jpg\"><br></div>".to_string();
-    let parsed_nodes = nodes(html);
+    let html = "<div><p>Keep</p><span>Remove</span><img src=\"keep.jpg\"><br></div>";
+    let parsed = nodes(html.to_string());
 
-    // remove span and br nodes
     let filter = |node: &Node| -> Option<Node> {
         match node {
-            Node::Block(block) if block.name == "span" => None,
-            Node::Void(void) if void.name == "br" => None,
+            Node::Block(b) if b.name == "span" => None,
+            Node::Void(v) if v.name == "br" => None,
             _ => Some(node.clone()),
         }
     };
 
-    let result = traverse(parsed_nodes, filter);
+    let result = traverse(parsed, filter);
 
-    // verify that spans and br nodes are removed
-    fn check_filtered(nodes: &[Node]) -> bool {
-        for node in nodes {
-            match node {
-                Node::Block(block) => {
-                    if block.name == "span" {
-                        return false;
-                    }
-                    if !check_filtered(&block.children) {
-                        return false;
-                    }
-                }
-
-                Node::Void(void) => {
-                    if void.name == "br" {
-                        return false;
-                    }
-                }
-
-                Node::Fragment(fragment) => {
-                    if !check_filtered(&fragment.children) {
-                        return false;
-                    }
-                }
-                _ => {}
-            }
-        }
-        true
-    }
-
-    assert!(check_filtered(&result));
+    assert!(matches!(
+        &result[..],
+        [Node::Block(div)]
+            if div.name == "div"
+            && div.children.len() == 2
+            && matches!(
+                &div.children[0],
+                Node::Block(p)
+                    if p.name == "p"
+                    && p.children.len() == 1
+                    && matches!(
+                        &p.children[0],
+                        Node::Text(t) if t.value == "Keep"
+                    )
+            )
+            && matches!(
+                &div.children[1],
+                Node::Void(img)
+                    if img.name == "img"
+                    && img.attributes.get("src")
+                        == Some(&NodeAttrVal::String("keep.jpg".into()))
+            )
+    ));
 }
 
 #[test]
@@ -621,7 +554,6 @@ fn test_to_json_simple_text_node() {
     assert_eq!(to_json(nodes), "[{\"value\":\"Hello, world!\"}]");
 }
 
-
 #[test]
 fn test_to_json_simple_void_node() {
     let nodes = vec![Node::simple_void("br")];
@@ -645,14 +577,20 @@ fn test_to_json_void_node_with_attributes() {
 
     let nodes = vec![Node::void("img", attrs)];
 
-    assert_eq!(to_json(nodes), "[{\"name\":\"img\",\"attributes\":{\"alt\":\"An image\",\"src\":\"image.jpg\"}}]");
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"img\",\"attributes\":{\"alt\":\"An image\",\"src\":\"image.jpg\"}}]"
+    );
 }
 
 #[test]
 fn test_to_json_simple_block_node() {
     let nodes = vec![Node::simple_block("div", vec![Node::text("Content")])];
 
-    assert_eq!(to_json(nodes), "[{\"name\":\"div\",\"attributes\":{},\"children\":[{\"value\":\"Content\"}]}]");
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"div\",\"attributes\":{},\"children\":[{\"value\":\"Content\"}]}]"
+    );
 }
 
 #[test]
@@ -697,7 +635,10 @@ fn test_to_json_fragment_node() {
         Node::text("Text after"),
     ])];
 
-    assert_eq!(to_json(nodes), "[{\"children\":[{\"value\":\"Text before\"},{\"name\":\"br\",\"attributes\":{}},{\"value\":\"Text after\"}]}]");
+    assert_eq!(
+        to_json(nodes),
+        "[{\"children\":[{\"value\":\"Text before\"},{\"name\":\"br\",\"attributes\":{}},{\"value\":\"Text after\"}]}]"
+    );
 }
 
 #[test]
@@ -755,7 +696,10 @@ fn test_to_json_boolean_attributes() {
 
     let nodes = vec![Node::void("input", attrs)];
 
-    assert_eq!(to_json(nodes), "[{\"name\":\"input\",\"attributes\":{\"readonly\":true,\"required\":true}}]");
+    assert_eq!(
+        to_json(nodes),
+        "[{\"name\":\"input\",\"attributes\":{\"readonly\":true,\"required\":true}}]"
+    );
 }
 
 #[test]
