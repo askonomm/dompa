@@ -102,7 +102,9 @@ impl Node {
     /// use dompa::*;
     /// use std::collections::BTreeMap;
     ///
-    /// Node::block("div", BTreeMap::new(), vec![]);
+    /// Node::block("div")
+    ///     .with_attribute("class", NodeAttrVal::string("content"))
+    ///     .with_children(vec![]);
     /// ```
     ///
     /// The verbose variant looks like this:
@@ -117,28 +119,12 @@ impl Node {
     ///   children: vec![]
     /// });
     /// ```
-    pub fn block(
-        name: impl Into<String>,
-        attributes: BTreeMap<String, NodeAttrVal>,
-        children: Vec<Node>,
-    ) -> Self {
+    pub fn block(name: impl Into<String>) -> Self {
         Node::Block(BlockNode {
             name: name.into(),
-            attributes,
-            children,
+            attributes: BTreeMap::new(),
+            children: Vec::new(),
         })
-    }
-
-    /// Simplifies the simplified shorthand function (`Node::block`) even more for when
-    /// you don't want to set attributes, in which case you can simply call this:
-    ///
-    /// ```rust
-    /// use dompa::*;
-    ///
-    /// Node::simple_block("div", vec![]);
-    /// ```
-    pub fn simple_block(name: impl Into<String>, children: Vec<Node>) -> Self {
-        Node::block(name, BTreeMap::new(), children)
     }
 
     /// Simplifies the creation of a `TextNode` by providing a shorthand
@@ -172,7 +158,7 @@ impl Node {
     /// use dompa::*;
     /// use std::collections::BTreeMap;
     ///
-    /// Node::void("img", BTreeMap::new());
+    /// Node::void("img");
     /// ```
     ///
     /// The verbose variant looks like this:
@@ -186,23 +172,11 @@ impl Node {
     ///   attributes: BTreeMap::new()
     /// });
     /// ```
-    pub fn void(name: impl Into<String>, attributes: BTreeMap<String, NodeAttrVal>) -> Self {
+    pub fn void(name: impl Into<String>) -> Self {
         Node::Void(VoidNode {
             name: name.into(),
-            attributes,
+            attributes: BTreeMap::new(),
         })
-    }
-
-    /// Simplifies the simplifier shrothand function (`Node::void`) even more for when
-    /// you don't want to set attributes, in which case you can simply call this:
-    ///
-    /// ```rust
-    /// use dompa::*;
-    ///
-    /// Node::simple_void("img");
-    /// ```
-    pub fn simple_void(name: impl Into<String>) -> Self {
-        Node::void(name, BTreeMap::new())
     }
 
     /// Simplifies the creation of a `FragmentNode` by providing a shrothand
@@ -211,7 +185,7 @@ impl Node {
     /// ```rust
     /// use dompa::*;
     ///
-    /// Node::fragment(vec![]);
+    /// Node::fragment().with_children(vec![]);
     /// ```
     ///
     /// The verbose variant looks like this:
@@ -223,8 +197,55 @@ impl Node {
     ///   children: vec![]
     /// });
     /// ```
-    pub fn fragment(children: Vec<Node>) -> Self {
-        Node::Fragment(FragmentNode { children })
+    pub fn fragment() -> Self {
+        Node::Fragment(FragmentNode {
+            children: Vec::new(),
+        })
+    }
+
+    /// Replace attributes with new attributes.
+    pub fn with_attributes(&mut self, attributes: BTreeMap<String, NodeAttrVal>) -> Self {
+        match self {
+            Node::Block(node) => {
+                node.attributes = attributes;
+            }
+            Node::Void(node) => {
+                node.attributes = attributes;
+            }
+            _ => (),
+        }
+
+        self.clone()
+    }
+
+    /// Insert an attribute.
+    pub fn with_attribute(&mut self, key: impl Into<String>, val: NodeAttrVal) -> Self {
+        match self {
+            Node::Block(node) => {
+                node.attributes.insert(key.into(), val);
+            }
+            Node::Void(node) => {
+                node.attributes.insert(key.into(), val);
+            }
+            _ => (),
+        }
+
+        self.clone()
+    }
+
+    /// Replace children with new children.
+    pub fn with_children(&mut self, children: Vec<Node>) -> Self {
+        match self {
+            Node::Block(node) => {
+                node.children = children;
+            }
+            Node::Fragment(node) => {
+                node.children = children;
+            }
+            _ => (),
+        }
+
+        self.clone()
     }
 }
 
@@ -393,13 +414,14 @@ fn attrs_from_coords(html: &str, coords: (usize, usize)) -> BTreeMap<String, Nod
             '=' => {
                 if let Some('"') = chars.peek() {
                     chars.next();
-                    
+
                     let value: String = chars.by_ref().take_while(|&c| c != '"').collect();
 
                     attrs.insert(current_name.clone(), NodeAttrVal::String(value));
                     current_name.clear();
                 } else {
-                    let value: String = chars.by_ref().take_while(|&c| !c.is_whitespace()).collect();
+                    let value: String =
+                        chars.by_ref().take_while(|&c| !c.is_whitespace()).collect();
 
                     attrs.insert(current_name.clone(), NodeAttrVal::String(value));
                     current_name.clear();
@@ -469,12 +491,12 @@ where
     for node in nodes {
         if let Some(t) = callable(&node) {
             match t {
-                Node::Block(mut blk) => {
-                    blk.children = traverse_inner(blk.children, callable);
-                    result.push(Node::Block(blk));
+                Node::Block(mut node) => {
+                    node.children = traverse_inner(node.children, callable);
+                    result.push(Node::Block(node));
                 }
-                Node::Fragment(frag) => {
-                    result.extend(traverse_inner(frag.children, callable));
+                Node::Fragment(node) => {
+                    result.extend(traverse_inner(node.children, callable));
                 }
                 Node::Text(_) | Node::Void(_) => result.push(t),
             }

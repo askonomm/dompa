@@ -10,7 +10,7 @@ Add Dompa to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-dompa = "1.1.2"
+dompa = "2.0.0"
 ```
 
 ## Usage
@@ -21,8 +21,7 @@ Basic usage looks like this:
 use dompa;
 
 fn main() {
-    let html = String::from("<div>Hello, World</div>");
-    let nodes = dompa::nodes(html);
+    let nodes = dompa::nodes("<div>Hello, World</div>");
 
     /* dbg! output of nodes:
     [
@@ -43,7 +42,7 @@ fn main() {
     */
 
     // Turn the node tree back into HTML
-    let html_output = dompa::to_html(nodes);
+    dompa::to_html(nodes);
 }
 ```
 
@@ -55,41 +54,16 @@ Dompa defines four types of nodes that represent HTML elements:
 
 Represents standard HTML elements that can contain children:
 
-A `BlockNode` can be created either by using the full, verbose way, such as:
+A `BlockNode` can be created like this:
 
 ```rust
-use dompa::{Node, BlockNode};
-use std::collections::HashMap;
+use dompa::{Node, NodeAttrVal};
 
-let block_node = Node::Block(BlockNode {
-  name: String::from("div"),
-  attributes: HashMap::new(),
-  children: Vec::new()
-});
-```
-
-Or you can use a shorthand helper, like so:
-
-```rust
-let block_node = Node::block("div", HashMap::new(), vec![]);
-```
-
-But if you don't care about manually adding attributes then you can use an even shorter shorthand helper, like so:
-
-```rust
-let block_node = Node::simple_block("div", vec![]);
-```
-
-Example with content:
-
-```rust
-use dompa::Node;
-use std::collections::HashMap;
-
-// Create a div with text content
-let div = Node::simple_block("div", vec![
-    Node::text("Hello, World!")
-]);
+let block_node = Node::block("div")
+    .with_attribute("class", NodeAttrVal::string("some-class"))
+    .with_children(vec![
+        Node::text("Hello, World")
+    ]);
 ```
 
 ### `VoidNode`
@@ -111,62 +85,23 @@ Represents self-closing HTML elements that cannot have children. Dompa automatic
 - `track`
 - `wbr`
 
-A `VoidNode` can be created either by using the full, verbose way, such as:
+A `VoidNode` can be created like this:
 
 ```rust
-use dompa::{Node, VoidNode};
-use std::collections::HashMap;
+use dompa::{Node, NodeAttrVal};
 
-let void_node = Node::Void(VoidNode {
-    name: String::from("img"),
-    attributes: HashMap::new()
-});
-```
-
-Or you can use a shorthand helper, like so:
-
-```rust
-let void_node = Node::void("img", HashMap::new());
-```
-
-But if you don't care about manually adding attributes then you can use an even shorter shorthand helper, like so:
-
-```rust
-let void_node = Node::simple_void("img");
-```
-
-Example with attributes:
-
-```rust
-use dompa::{Node, NodeAttributeValue};
-use std::collections::HashMap;
-
-// Create an img element with attributes
-let mut attrs = HashMap::new();
-attrs.insert(String::from("src"), NodeAttributeValue::string("/images/logo.png"));
-attrs.insert(String::from("alt"), NodeAttributeValue::string("Logo"));
-
-let img = Node::void("img", attrs);
+let void_node = Node::void("img")
+    .with_attribute("class", NodeAttrVal::string("profile-img"));
 ```
 
 ### `TextNode`
 
 Represents plain text content inside HTML elements:
 
-A `TextNode` can be created either by using the full, verbose way, such as:
+A `TextNode` can be created like this:
 
 ```rust
-use dompa::{Node, TextNode};
-
-let text_node = Node::Text(TextNode {
-    value: String::from("Hello, World!")
-});
-```
-
-Or you can use a shorthand helper, like so:
-
-```rust
-use dompa::Node;
+use dompa::{Node, NodeAttrVal};
 
 let text_node = Node::text("Hello, World!");
 ```
@@ -175,30 +110,17 @@ let text_node = Node::text("Hello, World!");
 
 A special node type that allows grouping multiple nodes without creating a parent element:
 
-A `FragmentNode` can be created either by using the full, verbose way, such as:
+A `FragmentNode` can be created like this:
 
 ```rust
-use dompa::{Node, FragmentNode};
+use dompa::{Node, NodeAttrVal};
 
-let fragment_node = Node::Fragment(FragmentNode {
-    children: vec![
+let fragment_node = Node::fragment()
+    .with_children(vec![
         Node::text("First part "),
-        Node::simple_void("br"),
+        Node::void("br"),
         Node::text("Second part")
-    ]
-});
-```
-
-Or you can use a shorthand helper, like so:
-
-```rust
-use dompa::Node;
-
-let fragment_node = Node::fragment(vec![
-    Node::text("First part "),
-    Node::simple_void("br"),
-    Node::text("Second part")
-]);
+    ]);
 ```
 
 Essentially, a `FragmentNode` is a node which children replace itself.
@@ -210,8 +132,7 @@ Essentially, a `FragmentNode` is a node which children replace itself.
 The `nodes` function parses an HTML string into a node tree:
 
 ```rust
-let html = String::from("<h1>Title</h1><p>Content</p>");
-let nodes = dompa::nodes(html);
+let nodes = dompa::nodes("<h1>Title</h1><p>Content</p>");
 ```
 
 ### `traverse` function
@@ -219,8 +140,7 @@ let nodes = dompa::nodes(html);
 The `traverse` function allows you to manipulate the node tree by applying a callback function to each node:
 
 ```rust
-let html = String::from("<h1>Old Title</h1><p>Content</p>");
-let nodes = dompa::nodes(html);
+let nodes = dompa::nodes("<h1>Old Title</h1><p>Content</p>");
 
 // Update the title text
 let updated_nodes = dompa::traverse(nodes, |node| {
@@ -240,8 +160,6 @@ The callback function must return an `Option<Node>`:
 
 - If you return `None` for a node, it will be removed from the tree
 - If you return `Some(node)`, that node will be kept in the tree, whether it's the original or a replacement
-- For nodes you don't want to modify, you must return the original node wrapped in `Some()` (typically `Some(node.clone())`)
-- For nodes you want to modify, return a new or updated node wrapped in `Some()`
 
 Note that the callback function is called for every node in the tree, so you need to handle all cases. In most cases, you'll have specific patterns you want to match and transform, and then a catch-all case that returns the original node.
 
@@ -263,27 +181,19 @@ let json = dompa::to_json(nodes);
 
 ## Working with Attributes
 
-Attributes are stored in a `HashMap` with string keys. Attribute values can be either `String` values or a boolean `true`:
+Attributes are stored in a `BTreeMap` with string keys. Attribute values can be either a `String` or a `True`.
 
 ```rust
-use dompa::{Node, NodeAttributeValue};
-use std::collections::HashMap;
+use dompa::{Node, NodeAttrVal};
+use std::collections::BTreeMap;
 
-let mut attrs = HashMap::new();
+let mut attrs = BTreeMap::new();
 // String attribute
-attrs.insert(String::from("href"), NodeAttributeValue::string("#top"));
+attrs.insert(String::from("href"), NodeAttrVal::string("#top"));
 // Boolean attribute (present without value)
-attrs.insert(String::from("required"), NodeAttributeValue::True);
+attrs.insert(String::from("required"), NodeAttrVal::True);
 
-let anchor = Node::block("a", attrs, vec![Node::text("Go to top")]);
-```
-
-Dompa provides a convenient helper method for string attributes:
-
-```rust
-// Instead of:
-NodeAttributeValue::String(String::from("value"))
-
-// You can use:
-NodeAttributeValue::string("value")
+let anchor = Node::block("a")
+    .with_attributes(attrs)
+    .with_children(vec![Node::text("Go to top")]);
 ```
