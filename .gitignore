@@ -1,0 +1,5 @@
+.idea/
+.nrepl-port
+.clj-kondo/
+dompa.iml
+.cpcache/
