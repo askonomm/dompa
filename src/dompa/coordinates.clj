@@ -1,7 +1,7 @@
 (ns dompa.coordinates
   (:require [clojure.string :as str]))
 
-(defn- construct-coordinates
+(defn- construct-coordinates-reducer
   [{:keys [char-type start-idx coordinates] :as state} [idx c]]
   (cond
     ; we're undecided what to do next,
@@ -10,6 +10,7 @@
     {:char-type (if (some #{c} "<>") :tag :text)
      :start-idx idx
      :coordinates coordinates}
+
     ; text ended, tag begins, which means we can
     ; record text node coordinates
     (and (= :text char-type)
@@ -33,6 +34,12 @@
      :coordinates (conj coordinates [start-idx idx])}
 
     :else state))
+
+(defn- construct-coordinates
+  [indexed-html]
+  (->> indexed-html
+       (reduce construct-coordinates-reducer {:char-type nil :start-idx 0 :coordinates []})
+       :coordinates))
 
 (defn coordinates->tag-name [html [from to]]
   (-> (subs html from to)
@@ -58,12 +65,16 @@
         [matching-start _] (nth coordinates matching-idx)]
     (assoc coordinates matching-idx [matching-start end])))
 
-(defn- merge-coordinates-fn [html]
+(defn- merge-coordinates-reducer-fn [html]
   (fn [coordinates [start end]]
     (if (and (= \< (nth html start))
              (= \/ (nth html (inc start) nil)))
       (merge-coordinate html coordinates [start end])
       (conj coordinates [start end]))))
+
+(defn merge-coordinates [html]
+  (-> (merge-coordinates-reducer-fn html)
+      (reduce [])))
 
 (defn children
   [coordinates [from to]]
@@ -83,6 +94,5 @@
 
 (defn html->coordinates [html]
   (->> (map-indexed vector html)
-       (reduce construct-coordinates {:char-type nil :start-idx 0 :coordinates []})
-       :coordinates
-       (reduce (merge-coordinates-fn html) [])))
+       construct-coordinates
+       merge-coordinates))

@@ -4,23 +4,25 @@
     [dompa.nodes :refer [coordinates->nodes]]))
 
 (defn html->nodes [html]
-  (->> html
-       html->coordinates
+  (->> (html->coordinates html)
        (coordinates->nodes html)))
 
-(defn nodes->html [nodes]
-  (reduce
-    (fn [html node]
-      (cond
-        (= (-> node :name) :dompa/text)
-        (str html (-> node :value))
+(defn nodes->html 
+  ([nodes]
+   (nodes->html nodes {:void-nodes #{:img}}))
+  ([nodes {:keys [void-nodes]}]
+   (reduce
+     (fn [html node]
+       (cond
+         (= (-> node :name) :dompa/text)
+         (str html (-> node :value))
 
-        :else
-        (let [node-name (-> node :name name)
-              node-child-html (nodes->html (-> node :children))]
-          (str html "<" node-name ">" node-child-html "</" node-name ">"))))
-    ""
-    nodes))
+         :else
+         (let [node-name (-> node :name name)
+               node-child-html (nodes->html (-> node :children))]
+           (str html "<" node-name ">" node-child-html "</" node-name ">"))))
+     ""
+     nodes)))
 
 (defn traverse-nodes [nodes pred]
   (reduce
