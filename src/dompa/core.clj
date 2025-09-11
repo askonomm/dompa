@@ -7,20 +7,26 @@
   (->> (html->coordinates html)
        (coordinates->nodes html)))
 
+(def default-void-nodes
+  #{:img})
+
+(defn- node->html
+  [{:keys [name content void-node?]}]
+  (if void-node?
+    (str "<" name ">")
+    (str "<" name ">" content "</" name ">")))
+
 (defn nodes->html 
   ([nodes]
-   (nodes->html nodes {:void-nodes #{:img}}))
+   (nodes->html nodes {:void-nodes default-void-nodes}))
   ([nodes {:keys [void-nodes]}]
    (reduce
      (fn [html node]
-       (cond
-         (= (-> node :name) :dompa/text)
+       (if (= (-> node :name) :dompa/text)
          (str html (-> node :value))
-
-         :else
-         (let [node-name (-> node :name name)
-               node-child-html (nodes->html (-> node :children))]
-           (str html "<" node-name ">" node-child-html "</" node-name ">"))))
+         (node->html {:name (-> node :name name)
+                      :content (nodes->html (-> node :children))
+                      :void-node? (contains? void-nodes (-> node :name))})))
      ""
      nodes)))
 

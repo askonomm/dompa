@@ -52,8 +52,10 @@
     [idx (coordinates->tag-name html coordinate)]))
 
 (defn- last-coordinate-by-tag-name-idx [html coordinates name start]
-  (let [filtered-coordinates (filter (fn [[_ end]] (< end start)) coordinates)
-        named-coordinates (map-indexed (name-coordinates-fn html) filtered-coordinates)]
+  (let [filter-fn (fn [[_ end]] (< end start))
+        filtered-coordinates (filter filter-fn coordinates)
+        index-fn (name-coordinates-fn html)
+        named-coordinates (map-indexed index-fn filtered-coordinates)]
     (->> named-coordinates
          (filter #(= name (-> % last)))
          last
@@ -62,7 +64,7 @@
 (defn- merge-coordinate [html coordinates [start end]]
   (let [name (coordinates->tag-name html [start end])
         matching-idx (last-coordinate-by-tag-name-idx html coordinates name start)
-        [matching-start _] (nth coordinates matching-idx)]
+        [matching-start] (nth coordinates matching-idx)]
     (assoc coordinates matching-idx [matching-start end])))
 
 (defn- merge-coordinates-reducer-fn [html]
@@ -72,9 +74,9 @@
       (merge-coordinate html coordinates [start end])
       (conj coordinates [start end]))))
 
-(defn merge-coordinates [html]
+(defn merge-coordinates [html coordinates]
   (-> (merge-coordinates-reducer-fn html)
-      (reduce [])))
+      (reduce [] coordinates)))
 
 (defn children
   [coordinates [from to]]
@@ -95,4 +97,4 @@
 (defn html->coordinates [html]
   (->> (map-indexed vector html)
        construct-coordinates
-       merge-coordinates))
+       (merge-coordinates html)))

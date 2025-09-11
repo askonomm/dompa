@@ -64,7 +64,7 @@
       (when node-children
         {:children node-children}))))
 
-(defn html-coordinates->nodes
+(defn coordinates->nodes
   [html coordinates]
   (when (seq coordinates)
     (let [sorted-coordinates (sort-by first coordinates)
@@ -72,6 +72,6 @@
           children (coordinates/children sorted-coordinates [parent-from parent-to])
           remaining (coordinates/without-children sorted-coordinates [parent-from parent-to])
           node-html (subs html parent-from (inc parent-to))
-          node-children (html-coordinates->nodes html children)]
+          node-children (coordinates->nodes html children)]
       (cons (construct-node node-html node-children)
-            (html-coordinates->nodes html remaining)))))
+            (coordinates->nodes html remaining)))))
