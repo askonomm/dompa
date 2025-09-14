@@ -1,39 +1,48 @@
 (ns dompa.coordinates
   (:require [clojure.string :as str]))
 
-(defn- compose-reducer
-  [{:keys [char-type start-idx coordinates] :as state} [idx c]]
-  (cond
-    ; we're undecided what to do next,
-    ; so we figure it out here
-    (nil? char-type)
-    {:char-type (if (some #{c} "<>") :tag :text)
-     :start-idx idx
-     :coordinates coordinates}
+(defn- compose-reducer-fn
+  [total-char-count]
+  (fn [{:keys [char-type start-idx coordinates] :as state} [idx c]]
+    (cond
+      ; we're undecided what to do next,
+      ; so we figure it out here
+      (nil? char-type)
+      {:char-type (if (some #{c} "<>") :tag :text)
+       :start-idx idx
+       :coordinates coordinates}
 
-    ; text ended, tag begins, which means we can
-    ; record text node coordinates
-    (and (= :text char-type)
-         (= \< c))
-    {:char-type :tag
-     :start-idx idx
-     :coordinates (conj coordinates [start-idx (dec idx)])}
+      ; text ended, tag begins, which means we can
+      ; record text node coordinates
+      (and (= :text char-type)
+           (= \< c))
+      {:char-type :tag
+       :start-idx idx
+       :coordinates (conj coordinates [start-idx (dec idx)])}
 
-    ; otherwise don't record anything, just note
-    ; the start of a tag
-    (and (not= :text char-type)
-         (= \< c))
-    {:char-type :tag
-     :start-idx idx
-     :coordinates coordinates}
+      ; text ended by HTML ending, record text node
+      ; coordinates
+      (and (= :text char-type)
+           (= (dec total-char-count) idx))
+      {:char-type nil
+       :start-idx idx
+       :coordinates (conj coordinates [start-idx idx])}
 
-    ; tag ended, record tag node coordinates
-    (= \> c)
-    {:char-type nil
-     :start-idx idx
-     :coordinates (conj coordinates [start-idx idx])}
+      ; otherwise don't record anything, just note
+      ; the start of a tag
+      (and (not= :text char-type)
+           (= \< c))
+      {:char-type :tag
+       :start-idx idx
+       :coordinates coordinates}
 
-    :else state))
+      ; tag ended, record tag node coordinates
+      (= \> c)
+      {:char-type nil
+       :start-idx idx
+       :coordinates (conj coordinates [start-idx idx])}
+
+      :else state)))
 
 (defn compose
   "Composes a given `html` string into a vector of coordinates.
@@ -52,7 +61,7 @@
                        :start-idx 0
                        :coordinates []}
         indexed-html (map-indexed vector html)]
-    (-> compose-reducer
+    (-> (compose-reducer-fn (count indexed-html))
         (reduce default-state indexed-html)
         :coordinates)))
 
