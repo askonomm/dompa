@@ -6,12 +6,14 @@
   "Transform a `html` string into a vector of coordinates
   indicating where an HTML node ends and begins."
   [html]
-  (->> coordinates/compose
-       (coordinates/unify html)))
+  (->> html
+       coordinates/compose
+       coordinates/unify))
 
 (defn ->nodes
   "Transform a `html` string into a tree of nodes,
   each representing one HTML node and its children."
   [html]
-  (->> (->coordinates html)
-       (coordinates/->nodes html)))
+  (-> html
+      ->coordinates
+      coordinates/->nodes))

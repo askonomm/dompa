@@ -149,7 +149,7 @@
   (if (str/starts-with? html "<")
     (->> (subs html 1)
          (take-while #(not (contains? #{\space \>} %)))
-         (reduce str)
+         (apply str)
          keyword)
     :dompa/text))
 
