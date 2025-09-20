@@ -61,11 +61,13 @@
                        :start-idx 0
                        :coordinates []}
         indexed-html (map-indexed vector html)]
-    (-> (compose-reducer-fn (count indexed-html))
-        (reduce default-state indexed-html)
-        :coordinates)))
+    {:html html
+     :coordinates (-> (compose-reducer-fn (count indexed-html))
+                      (reduce default-state indexed-html)
+                      :coordinates)}))
 
-(defn- coordinates->tag-name [html [start end]]
+(defn- coordinates->tag-name
+  [html [start end]]
   (let [value (subs html start end)]
     (if (str/starts-with? value "<")
       (->> (subs html start end)
@@ -74,11 +76,13 @@
            (apply str))
       value)))
 
-(defn- name-coordinates-fn [html]
+(defn- name-coordinates-fn
+  [html]
   (fn [idx coordinate]
     [idx (coordinates->tag-name html coordinate)]))
 
-(defn- last-by-tag-name-idx [html coordinates name start]
+(defn- last-by-tag-name-idx
+  [html coordinates name start]
   (let [filter-fn (fn [[_ end]] (< end start))
         filtered-coordinates (filter filter-fn coordinates)
         index-fn (name-coordinates-fn html)
@@ -88,7 +92,8 @@
          last
          first)))
 
-(defn- unify-one [html coordinates [start end]]
+(defn- unify-one
+  [html coordinates [start end]]
   (let [name (coordinates->tag-name html [start end])
         matching-idx (last-by-tag-name-idx html coordinates name start)]
     (if matching-idx
@@ -96,7 +101,8 @@
         (assoc coordinates matching-idx [matching-start end]))
       coordinates)))
 
-(defn- unify-reducer-fn [html]
+(defn- unify-reducer-fn
+  [html]
   (fn [coordinates [start end]]
     (if (and (= \< (nth html start))
              (= \/ (nth html (inc start) nil)))
@@ -115,9 +121,10 @@
   because non-unified coordinates are blind to the context
   in which they live, having only had one pass over the
   raw HTML string which composes the initial coordinates."
-  [html coordinates]
-  (-> (unify-reducer-fn html)
-      (reduce [] coordinates)))
+  [{:keys [html coordinates]}]
+  {:html html
+   :coordinates (-> (unify-reducer-fn html)
+                    (reduce [] coordinates))})
 
 (defn- children
   [coordinates [from to]]
@@ -174,15 +181,79 @@
         v (if (nil? v) true (normalize-html-attr-str v))]
     {k v}))
 
-(defn- html-str->node-attrs [html]
+(defn- html->str->node-attrs-reducer
+  [attrs-html]
+  (fn [{:keys [start-idx has-attrs? attrs] :as state} [idx c]]
+    (cond
+      ; end of attrs-html, so lets collect whatever there is left
+      (= (count attrs-html) (inc idx))
+      {:start-idx 0
+       :has-attrs? has-attrs?
+       :attrs (conj attrs (subs attrs-html start-idx (inc idx)))}
+
+      ; encountered a space, but there's no attrs, we're good
+      ; to collect whatever there is.
+      (and (= \space c)
+           (not has-attrs?))
+      {:start-idx (inc idx)
+       :has-attrs? false
+       :attrs (conj attrs (subs attrs-html start-idx idx))}
+
+      ; if we discover a = with quote after it,
+      ; it means we have attrs
+      (and (= \= c)
+           (= \" (get attrs-html (inc idx))))
+      {:start-idx start-idx
+       :has-attrs? true
+       :attrs attrs}
+
+      ; quote with either space next or nothing next,
+      ; and no = before, and we have attrs
+      (and (= \" c)
+           (not (= \= (get attrs-html (dec idx))))
+           (or (nil? (get attrs-html (inc idx)))
+               (= \space (get attrs-html (inc idx))))
+           has-attrs?)
+      {:start-idx (inc idx)
+       :has-attrs? false
+       :attrs (conj attrs (subs attrs-html start-idx (inc idx)))}
+
+      :else state)))
+
+(defn- html->str->attrs-html-str [html]
+  (->> (subs html 1)
+       (take-while #(not (contains? #{\> \/} %)))
+       (partition-by #(= % \space))
+       (drop 1)
+       flatten
+       (reduce str)
+       str/trim))
+
+(defn- html-str->node-attrs
+  "Turns a given `html` string into an attribute map, e.g:
+
+  ```html
+  <input type=\"checkbox\" checked />
+  ```
+
+  Would become:
+
+  ```clojure
+  {:type \"checkbox\"
+   :checked true}
+  ```"
+  [html]
   (when (str/starts-with? html "<")
-    (->> (subs html 1)
-         (take-while #(not (contains? #{\> \/} %)))
-         (partition-by #(= % \space))
-         (drop 1)
-         (filter #(not= (-> % first) \space))
-         (map parse-html-attr-str)
-         (into {}))))
+    (let [attrs-html (html->str->attrs-html-str html)
+          indexed-attrs-html (map-indexed vector attrs-html)
+          default-reducer-state {:start-idx 0
+                                 :has-attrs? false
+                                 :attrs []}]
+      (as-> (html->str->node-attrs-reducer attrs-html) $
+            (reduce $ default-reducer-state indexed-attrs-html)
+            (remove str/blank? (:attrs $))
+            (map parse-html-attr-str $)
+            (into {} $)))))
 
 (defn- construct-node
   [node-html node-children]
@@ -198,14 +269,25 @@
 
 (defn ->nodes
   "Transform given `html` according to given `coordinates` into
-  a tree of nodes, each representing one HTML node and its children."
-  [html coordinates]
+  a tree of nodes, each representing one HTML node and its children.
+
+  Direct output of both `compose` and `unify` can be given to this
+  function, allowing chaining such as:
+
+  ```clojure
+  (-> \"some html ...\"
+      coordinates/compose
+      coordinates/unify
+      coordinates/->nodes)
+  ```"
+  [{:keys [html coordinates]}]
   (when (seq coordinates)
     (let [sorted-coordinates (sort-by first coordinates)
           [parent-from parent-to] (first sorted-coordinates)
           children (children sorted-coordinates [parent-from parent-to])
           remaining (without-children sorted-coordinates [parent-from parent-to])
           node-html (subs html parent-from (inc parent-to))
-          node-children (->nodes html children)]
-      (cons (construct-node node-html node-children)
-            (->nodes html remaining)))))
+          node-children (->nodes {:html html :coordinates children})]
+      (-> (cons (construct-node node-html node-children)
+                (->nodes {:html html :coordinates remaining}))
+          vec))))
