@@ -1,34 +1,40 @@
 (ns dompa.utils
   (:require [dompa.nodes :as nodes]))
 
-(defmacro $ [name & opts]
+(defmacro defhtml [name & args-and-elements]
+  (let [[args & elements] args-and-elements]
+    `(defn ~name ~args
+       (nodes/->html (vector ~@elements)))))
+
+(defn $ [name & opts]
   (if (string? name)
-    {:name :dompa/text
-     :value name}
-    (let [node {:name name}
-          attrs? (map? (first opts))
+    {:node/name  :dompa/text
+     :node/value (str name (apply str opts))}
+    (let [node {:node/name name}
+          attrs? (not (get (first opts) :node/name))
           attrs (if attrs? (first opts) {})
           children (if attrs? (rest opts) opts)]
       (merge
         node
         (when attrs?
-          {:attrs attrs})
+          {:node/attrs attrs})
         (when-not (empty? children)
-          {:children (into [] children)})))))
+          {:node/children children})))))
 
-(defn- page []
-  (list
-    ($ :!doctype {:html true})
-    ($ :html {:lang "en"}
-      ($ :head
-        ($ :meta {:charset "utf-8"})
-        ($ :link {:rel "stylesheet" :href "style.css"}))
-      ($ :body
-        ($ :span {:class "test"}
-        ($ :span {:class "test2"}
-          ($ "hello, world.")))))))
+(defhtml page
+  [test]
+  ($ :!doctype {:html true})
+  ($ :html {:lang "en"}
+    ($ :head
+      ($ :meta {:charset "utf-8"})
+      ($ :link {:rel "stylesheet" :href "style.css"}))
+    ($ :body
+      ($ :span {:class "test"})
+      ($ :span {:class "test2"}
+        ($ "hello" test)))))
+
+(prn (page "world"))
 
 (comment
-  ($ "asdasd")
-  (page)
-  (nodes/->html (page)))
+  ($ :div {:class "test"}
+    ($ "asdasd" "asd")))

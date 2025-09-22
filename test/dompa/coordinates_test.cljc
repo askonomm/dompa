@@ -97,48 +97,48 @@
 
 (deftest nodes-test
   (testing "Create nodes"
-    (is (= [{:name     :div
-             :attrs    {}
-             :children [{:name  :dompa/text
-                         :value "hello"}]}]
+    (is (= [{:node/name     :div
+             :node/attrs    {}
+             :node/children [{:node/name  :dompa/text
+                              :node/value "hello"}]}]
            (-> "<div>hello</div>"
                coordinates/compose
                coordinates/unify
                coordinates/->nodes))))
 
   (testing "Create nodes with attributes"
-    (is (= [{:name     :div
-             :attrs    {:class     "some test classes"
-                        :data-attr "something"
-                        :checked   true}
-             :children [{:name  :dompa/text
-                         :value "hello"}]}]
+    (is (= [{:node/name     :div
+             :node/attrs    {:class     "some test classes"
+                             :data-attr "something"
+                             :checked   true}
+             :node/children [{:node/name  :dompa/text
+                              :node/value "hello"}]}]
            (-> "<div class=\"some test classes\" data-attr=\"something\" checked>hello</div>"
                coordinates/compose
                coordinates/unify
                coordinates/->nodes))))
 
   (testing "Create nested nodes"
-    (is (= [{:name     :b
-             :attrs    {}
-             :children [{:name  :dompa/text
-                         :value "bold"}]}
-            {:name  :img
-             :attrs {:src "img.png"}}
-            {:name  :dompa/text
-             :value "Hello, "}
-            {:name     :span
-             :attrs    {}
-             :children [{:name  :dompa/text
-                         :value "wor"}
-                        {:name     :i
-                         :attrs    {}
-                         :children [{:name  :dompa/text
-                                     :value "l"}
-                                    {:name     :b
-                                     :attrs    {}
-                                     :children [{:name  :dompa/text
-                                                 :value "d"}]}]}]}]
+    (is (= [{:node/name     :b
+             :node/attrs    {}
+             :node/children [{:node/name  :dompa/text
+                              :node/value "bold"}]}
+            {:node/name  :img
+             :node/attrs {:src "img.png"}}
+            {:node/name  :dompa/text
+             :node/value "Hello, "}
+            {:node/name     :span
+             :node/attrs    {}
+             :node/children [{:node/name  :dompa/text
+                              :node/value "wor"}
+                             {:node/name     :i
+                              :node/attrs    {}
+                              :node/children [{:node/name  :dompa/text
+                                               :node/value "l"}
+                                              {:node/name     :b
+                                               :node/attrs    {}
+                                               :node/children [{:node/name  :dompa/text
+                                                                :node/value "d"}]}]}]}]
            (-> "<b>bold</b><img src=\"img.png\" />Hello, <span>wor<i>l<b>d</b></i></span>"
                coordinates/compose
                coordinates/unify

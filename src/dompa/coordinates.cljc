@@ -259,13 +259,13 @@
   [node-html node-children]
   (let [node-name (html-str->node-name node-html)]
     (merge
-      {:name node-name}
+      {:node/name node-name}
       (when (= node-name :dompa/text)
-        {:value node-html})
+        {:node/value node-html})
       (when-let [attrs (html-str->node-attrs node-html)]
-        {:attrs attrs})
+        {:node/attrs attrs})
       (when node-children
-        {:children node-children}))))
+        {:node/children node-children}))))
 
 (defn ->nodes
   "Transform given `html` according to given `coordinates` into

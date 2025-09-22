@@ -13,17 +13,17 @@
 (defn- node->html-reducer-fn
   [void-nodes nodes->html-fn]
   (fn [html node]
-    (let [node-name (-> node :name name)
-          node-attrs (reduce-kv node-attrs-reducer "" (-> node :attrs))]
+    (let [node-name (-> node :node/name name)
+          node-attrs (reduce-kv node-attrs-reducer "" (-> node :node/attrs))]
       (cond
-        (= (-> node :name) :dompa/text)
-        (str html (-> node :value))
+        (= (-> node :node/name) :dompa/text)
+        (str html (-> node :node/value))
 
-        (contains? void-nodes (-> node :name))
+        (contains? void-nodes (-> node :node/name))
         (str html "<" node-name node-attrs">")
 
         :else
-        (let [value (nodes->html-fn (-> node :children))]
+        (let [value (nodes->html-fn (-> node :node/children))]
           (str html "<" node-name node-attrs ">" value "</" node-name ">"))))))
 
 (defn traverse
@@ -35,8 +35,8 @@
   [nodes traverser-fn]
   (-> (fn [updated-nodes node]
         (if-let [updated-node (traverser-fn node)]
-          (let [children (traverse (-> updated-node :children) traverser-fn)]
-            (conj updated-nodes (assoc updated-node :children children)))
+          (let [children (traverse (-> updated-node :node/children) traverser-fn)]
+            (conj updated-nodes (assoc updated-node :node/children children)))
           updated-nodes))
       (reduce [] nodes)))
 
@@ -61,6 +61,7 @@
     - `:wbr`
   "
   ([nodes]
+   (prn "nodes: " nodes)
    (->html nodes {:void-nodes default-void-nodes}))
   ([nodes {:keys [void-nodes]}]
    (-> (node->html-reducer-fn void-nodes ->html)
