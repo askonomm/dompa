@@ -4,19 +4,27 @@
   #{:!doctype :area :base :br :col :embed :hr :img :input
     :link :meta :source :track :wbr})
 
+(defn- node-attrs-reducer [attrs k v]
+  (let [attr-name (-> k name)]
+    (if (true? v)
+      (str attrs " " attr-name)
+      (str attrs " " attr-name "=\"" v "\""))))
+
 (defn- node->html-reducer-fn
   [void-nodes nodes->html-fn]
   (fn [html node]
-    (cond
-      (= (-> node :name) :dompa/text)
-      (str html (-> node :value))
+    (let [node-name (-> node :name name)
+          node-attrs (reduce-kv node-attrs-reducer "" (-> node :attrs))]
+      (cond
+        (= (-> node :name) :dompa/text)
+        (str html (-> node :value))
 
-      (contains? void-nodes (-> node :name))
-      (str "<" (-> node :name) ">")
+        (contains? void-nodes (-> node :name))
+        (str html "<" node-name node-attrs">")
 
-      :else
-      (let [value (nodes->html-fn (-> node :children))]
-        (str "<" (-> node :name) ">" value "</" (-> node :name) ">")))))
+        :else
+        (let [value (nodes->html-fn (-> node :children))]
+          (str html "<" node-name node-attrs ">" value "</" node-name ">"))))))
 
 (defn traverse
   "Recursively traverses given tree of `nodes` with a `traverser-fn`
