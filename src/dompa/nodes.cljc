@@ -13,18 +13,19 @@
 (defn- node->html-reducer-fn
   [void-nodes nodes->html-fn]
   (fn [html node]
-    (let [node-name (-> node :node/name name)
-          node-attrs (reduce-kv node-attrs-reducer "" (-> node :node/attrs))]
-      (cond
-        (= (-> node :node/name) :dompa/text)
-        (str html (-> node :node/value))
+    (when-not (nil? node)
+      (let [node-name (-> node :node/name name)
+            node-attrs (reduce-kv node-attrs-reducer "" (-> node :node/attrs))]
+        (cond
+          (= (-> node :node/name) :dompa/text)
+          (str html (-> node :node/value))
 
-        (contains? void-nodes (-> node :node/name))
-        (str html "<" node-name node-attrs">")
+          (contains? void-nodes (-> node :node/name))
+          (str html "<" node-name node-attrs">")
 
-        :else
-        (let [value (nodes->html-fn (-> node :node/children))]
-          (str html "<" node-name node-attrs ">" value "</" node-name ">"))))))
+          :else
+          (let [value (nodes->html-fn (-> node :node/children))]
+            (str html "<" node-name node-attrs ">" value "</" node-name ">")))))))
 
 (defn traverse
   "Recursively traverses given tree of `nodes` with a `traverser-fn`

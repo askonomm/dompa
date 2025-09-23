@@ -1,1 +1,3 @@
-{:deps {}}
+{:deps {}
+ :paths ["src" "resources"]
+ :aliases {:dev {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.07.28"}}}}}

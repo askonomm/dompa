@@ -1,40 +1,42 @@
 (ns dompa.utils
   (:require [dompa.nodes :as nodes]))
 
-(defmacro defhtml [name & args-and-elements]
+(defmacro defhtml
+  {:clj-kondo/lint-as 'clojure.core/defn}
+  [name & args-and-elements]
   (let [[args & elements] args-and-elements]
     `(defn ~name ~args
        (nodes/->html (vector ~@elements)))))
 
-(defn $ [name & opts]
-  (if (string? name)
-    {:node/name  :dompa/text
-     :node/value (str name (apply str opts))}
-    (let [node {:node/name name}
-          attrs? (not (get (first opts) :node/name))
-          attrs (if attrs? (first opts) {})
-          children (if attrs? (rest opts) opts)]
-      (merge
-        node
-        (when attrs?
-          {:node/attrs attrs})
-        (when-not (empty? children)
-          {:node/children children})))))
+(defn- flattench [children]
+  (mapcat #(if (sequential? %) (flattench %) [%]) children))
 
-(defhtml page
-  [test]
-  ($ :!doctype {:html true})
-  ($ :html {:lang "en"}
-    ($ :head
-      ($ :meta {:charset "utf-8"})
-      ($ :link {:rel "stylesheet" :href "style.css"}))
-    ($ :body
-      ($ :span {:class "test"})
-      ($ :span {:class "test2"}
-        ($ "hello" test)))))
+(defmacro $
+  {:clj-kondo/lint-as 'clojure.core/list}
+  [name & opts]
+  `(if (string? ~name)
+     {:node/name  :dompa/text
+      :node/value (apply str ~name ~opts)}
+     (let [name# ~name
+           opts-list# (list ~@opts)
+           first-opt# (first opts-list#)
+           attrs?# (and (map? first-opt#)
+                        (not (contains? first-opt# :node/name)))
+           attrs# (if attrs?# first-opt# {})
+           children# (if attrs?# (rest opts-list#) opts-list#)]
+       (merge
+         {:node/name name#}
+         (when attrs?# {:node/attrs attrs#})
+         (when (seq children#) {:node/children (flattench children#)})))))
 
-(prn (page "world"))
-
-(comment
+(defhtml page [who]
   ($ :div {:class "test"}
-    ($ "asdasd" "asd")))
+    ($ "hello world")
+    (let [n "who"]
+      ($ n))
+    (for [x ["1" "2" "3"]]
+      ($ x))
+    ($ who)
+    (mapv #($ %) ["a" "b" "c"])))
+
+(page "world")
