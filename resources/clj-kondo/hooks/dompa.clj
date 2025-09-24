@@ -1,7 +1,7 @@
 (ns hooks.dompa
   (:require [clj-kondo.hooks-api :as api]))
 
-(defn string-like? [x]
+(defn str-able? [x]
   (or (api/string-node? x)
       (api/token-node? x)))
 
@@ -13,7 +13,7 @@
       ; strings, i.e. whatever (str) can do.
       (or (api/string-node? first-arg)
           (api/token-node? first-arg))
-      (let [invalid-args (filter #(not (string-like? %)) rest-args)]
+      (let [invalid-args (filter #(not (str-able? %)) rest-args)]
         (doall
           (for [invalid-arg invalid-args]
             (api/reg-finding!
@@ -34,7 +34,16 @@
                         "the second argument must be a sequence or a map. "
                         "In other words, the second argument must be an attribute map "
                         "or sequence of other nodes created with the $ macro.")
-          :type :dompa.utils/$-arg-validation)))))
+          :type :dompa.utils/$-arg-validation))
 
-      ; if the first arg is a keyword, the second arg is a map, then the third arg can
-      ; only be a sequence
+      ; if the first arg is a keyword, the second arg is a map, then from
+      ; the second forwards everything has to be a list node
+      (and (api/keyword-node? first-arg)
+           (api/map-node? (first rest-args))
+           (not (every? #(api/list-node? %) (rest rest-args))))
+      (api/reg-finding!
+        (assoc (meta (second rest-args))
+          :message (str "Invalid argument type. When having a attribute map, "
+                        "the rest of the arguments must be a $ macro or a sequence "
+                        "of $ macros")
+          :type :dompa.utils/$-arg-validation)))))

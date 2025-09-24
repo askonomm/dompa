@@ -12,12 +12,12 @@
   (fn [rf]
     (letfn [(step [result input]
               (if (sequential? input)
-                (reduce step result input)                  ;; recursively reduce over nested seq
-                (rf result input)))]                        ;; apply rf with accumulator + value
+                (reduce step result input)
+                (rf result input)))]
       (fn
-        ([] (rf))                                           ;; init
-        ([result] (rf result))                              ;; completion
-        ([result input] (step result input))))))            ;; step
+        ([] (rf))
+        ([result] (rf result))
+        ([result input] (step result input))))))
 
 (defn ->flat [children]
   (into [] (->flat-xf) children))
@@ -39,9 +39,10 @@
 
 (defhtml test-page []
   (let [n 123]
-    ($ :div
-      ($ "hello world" n))
-    ($ "hello")
-    ($ :div (map #(%) []) "test")))
+    ($ :<>
+      ($ :div
+        ($ "hello world" n))
+      ($ "hello")
+      ($ :div))))
 
 (test-page)
