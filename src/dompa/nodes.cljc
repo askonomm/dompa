@@ -62,7 +62,6 @@
     - `:wbr`
   "
   ([nodes]
-   (prn "nodes: " nodes)
    (->html nodes {:void-nodes default-void-nodes}))
   ([nodes {:keys [void-nodes]}]
    (-> (node->html-reducer-fn void-nodes ->html)
