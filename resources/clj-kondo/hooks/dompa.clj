@@ -35,3 +35,6 @@
                         "In other words, the second argument must be an attribute map "
                         "or sequence of other nodes created with the $ macro.")
           :type :dompa.utils/$-arg-validation)))))
+
+      ; if the first arg is a keyword, the second arg is a map, then the third arg can
+      ; only be a sequence

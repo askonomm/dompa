@@ -42,6 +42,6 @@
     ($ :div
       ($ "hello world" n))
     ($ "hello")
-    ($ :div "test")))
+    ($ :div (map #(%) []) "test")))
 
 (test-page)
