@@ -1,6 +1,5 @@
 (ns dompa.utils
-  (:require [dompa.nodes :as nodes]
-            [criterium.core :as c]))
+  (:require [dompa.nodes :as nodes]))
 
 (defmacro defhtml
   {:clj-kondo/lint-as 'clojure.core/defn}
@@ -9,7 +8,7 @@
     `(defn ~name ~args
        (nodes/->html (vector ~@elements)))))
 
-(defn flattench-xf []
+(defn ->flat-xf []
   (fn [rf]
     (letfn [(step [result input]
               (if (sequential? input)
@@ -20,15 +19,14 @@
         ([result] (rf result))                              ;; completion
         ([result input] (step result input))))))            ;; step
 
-(defn flattench [children]
-  (into [] (flattench-xf) children))
+(defn ->flat [children]
+  (into [] (->flat-xf) children))
 
 (defmacro $
-  {:clj-kondo/lint-as 'clojure.core/list}
   [name & opts]
   `(if (string? ~name)
      {:node/name  :dompa/text
-      :node/value (apply str ~name ~@opts)}
+      :node/value (str ~name ~@opts)}
      (let [opts# (list ~@opts)
            first-opt# (first opts#)
            attrs?# (and (map? first-opt#)
@@ -37,18 +35,13 @@
            children# (if attrs?# (rest opts#) opts#)]
        (cond-> {:node/name ~name}
                attrs?# (assoc :node/attrs attrs#)
-               (seq children#) (assoc :node/children (flattench children#))))))
-
-(defn bench-n []
-  (c/quick-bench
-    (dotimes [_ 1500]
-      ($ :div {:class "container"}
-          (map #($ %) ["a" "b" "c"])
-          ($ "hello world")))))
+               (seq children#) (assoc :node/children (->flat children#))))))
 
 (defhtml test-page []
-  ($ :div
-      (map #($ %) ["a" "b" "c"])
-      ($ "hello world")))
+  (let [n 123]
+    ($ :div
+      ($ "hello world" n))
+    ($ "hello")
+    ($ :div "test")))
 
 (test-page)

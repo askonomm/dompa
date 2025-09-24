@@ -1,0 +1,2 @@
+{:hooks {:analyze-call {dompa.utils/$ hooks.dompa/$}}
+ :linters {:dompa.utils/$-arg-validation {:level :warning}}}
