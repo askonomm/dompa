@@ -19,8 +19,9 @@
             (api/reg-finding!
               (assoc (meta invalid-arg)
                 :message (str "Invalid argument type. When creating a text node, "
-                              "only literal values (strings, numbers and symbols) are allowed.")
-                :type :dompa.utils/$-arg-validation)))))
+                              "only literal values (strings, numbers and symbols) "
+                              "are allowed.")
+                :type :dompa.templates/$-arg-validation)))))
 
       ; if the first arg is a keyword, then the second argument can only be
       ; a sequence or a map.
@@ -34,10 +35,10 @@
                         "the second argument must be a sequence or a map. "
                         "In other words, the second argument must be an attribute map "
                         "or sequence of other nodes created with the $ macro.")
-          :type :dompa.utils/$-arg-validation))
+          :type :dompa.templates/$-arg-validation))
 
       ; if the first arg is a keyword, the second arg is a list, then
-      ; every arg has to be a list.
+      ; every arg has to be a list node.
       (and (api/keyword-node? first-arg)
            (api/list-node? (first rest-args))
            (not (every? #(api/list-node? %) (rest rest-args))))
@@ -47,7 +48,7 @@
             (assoc (meta arg)
               :message (str "Invalid argument type. Argument has to be a $ macro "
                             "or a sequence of $ macros.")
-              :type :dompa.utils/$-arg-validation))))
+              :type :dompa.templates/$-arg-validation))))
 
       ; if the first arg is a keyword, the second arg is a map, then from
       ; the second forwards everything has to be a list node
@@ -59,4 +60,4 @@
           :message (str "Invalid argument type. When having a attribute map, "
                         "the rest of the arguments must be a $ macro or a sequence "
                         "of $ macros")
-          :type :dompa.utils/$-arg-validation)))))
+          :type :dompa.templates/$-arg-validation)))))

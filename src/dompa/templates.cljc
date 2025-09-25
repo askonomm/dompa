@@ -1,4 +1,4 @@
-(ns dompa.utils
+(ns dompa.templates
   (:require [dompa.nodes :as nodes]))
 
 (defmacro defhtml

@@ -1,2 +1,2 @@
-{:hooks {:analyze-call {dompa.utils/$ hooks.dompa/$}}
- :linters {:dompa.utils/$-arg-validation {:level :warning}}}
+{:hooks {:analyze-call {dompa.templates/$ hooks.dompa/$}}
+ :linters {:dompa.templates/$-arg-validation {:level :warning}}}
