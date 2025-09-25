@@ -31,10 +31,7 @@
                     (api/list-node? (first rest-args)))))
       (api/reg-finding!
         (assoc (meta (first rest-args))
-          :message (str "Invalid argument type. When creating a non-text node, "
-                        "the second argument must be a sequence or a map. "
-                        "In other words, the second argument must be an attribute map "
-                        "or sequence of other nodes created with the $ macro.")
+          :message (str "Invalid argument type. Argument must be a sequence or a map.")
           :type :dompa.templates/$-arg-validation))
 
       ; if the first arg is a keyword, the second arg is a list, then
@@ -46,7 +43,7 @@
         (for [arg (filter #(not (api/list-node? %)) rest-args)]
           (api/reg-finding!
             (assoc (meta arg)
-              :message (str "Invalid argument type. Argument has to be a $ macro "
+              :message (str "Invalid argument type. Argument must be a $ macro "
                             "or a sequence of $ macros.")
               :type :dompa.templates/$-arg-validation))))
 
@@ -57,7 +54,6 @@
            (not (every? #(api/list-node? %) (rest rest-args))))
       (api/reg-finding!
         (assoc (meta (second rest-args))
-          :message (str "Invalid argument type. When having a attribute map, "
-                        "the rest of the arguments must be a $ macro or a sequence "
-                        "of $ macros")
+          :message (str "Invalid argument type. Argument must be a $ macro "
+                        "or a sequence of $ macros.")
           :type :dompa.templates/$-arg-validation)))))
