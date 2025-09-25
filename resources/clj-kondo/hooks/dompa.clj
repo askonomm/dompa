@@ -36,6 +36,19 @@
                         "or sequence of other nodes created with the $ macro.")
           :type :dompa.utils/$-arg-validation))
 
+      ; if the first arg is a keyword, the second arg is a list, then
+      ; every arg has to be a list.
+      (and (api/keyword-node? first-arg)
+           (api/list-node? (first rest-args))
+           (not (every? #(api/list-node? %) (rest rest-args))))
+      (doall
+        (for [arg (filter #(not (api/list-node? %)) rest-args)]
+          (api/reg-finding!
+            (assoc (meta arg)
+              :message (str "Invalid argument type. Argument has to be a $ macro "
+                            "or a sequence of $ macros.")
+              :type :dompa.utils/$-arg-validation))))
+
       ; if the first arg is a keyword, the second arg is a map, then from
       ; the second forwards everything has to be a list node
       (and (api/keyword-node? first-arg)
