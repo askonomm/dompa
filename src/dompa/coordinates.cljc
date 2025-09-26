@@ -257,15 +257,12 @@
 
 (defn- construct-node
   [node-html node-children]
-  (let [node-name (html-str->node-name node-html)]
-    (merge
-      {:node/name node-name}
-      (when (= node-name :dompa/text)
-        {:node/value node-html})
-      (when-let [attrs (html-str->node-attrs node-html)]
-        {:node/attrs attrs})
-      (when node-children
-        {:node/children node-children}))))
+  (let [node-name (html-str->node-name node-html)
+        node-attrs (html-str->node-attrs node-html)]
+    (cond-> {:node/name node-name}
+            (= node-name :dompa/text) (assoc :node/value node-html)
+            (not (nil? node-attrs)) (assoc :node/attrs node-attrs)
+            (not (nil? node-children)) (assoc :node/children node-children))))
 
 (defn ->nodes
   "Transform given `html` according to given `coordinates` into
