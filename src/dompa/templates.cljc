@@ -2,7 +2,6 @@
   (:require [dompa.nodes :as nodes]))
 
 (defmacro defhtml
-  {:clj-kondo/lint-as 'clojure.core/defn}
   [name & args-and-elements]
   (let [[args & elements] args-and-elements]
     `(defn ~name ~args

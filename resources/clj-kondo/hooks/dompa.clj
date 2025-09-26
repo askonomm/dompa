@@ -57,3 +57,30 @@
           :message (str "Invalid argument type. Argument must be a $ macro "
                         "or a sequence of $ macros.")
           :type :dompa.templates/$-arg-validation)))))
+
+(defn defhtml [{:keys [node]}]
+  (let [[_ first-arg second-arg & rest-args] (:children node)]
+    (cond
+      ; first argument has to be a symbol
+      (not (api/token-node? first-arg))
+      (api/reg-finding!
+        (assoc (meta first-arg)
+          :message "Invalid argument type. Binding name must be a symbol."
+          :type :dompa.templates/defhtml-arg-validation))
+
+      ; second argument should be a vector
+      (not (api/vector-node? second-arg))
+      (api/reg-finding!
+        (assoc (meta second-arg)
+          :message "Invalid argument type. Must be a vector of arguments."
+          :type :dompa.templates/defhtml-arg-validation))
+
+      ; rest of the arguments should be a list
+      (not (every? #(api/list-node? %) rest-args))
+      (doall
+        (for [arg rest-args]
+          (api/reg-finding!
+            (assoc (meta arg)
+              :message (str "Invalid argument type. Argument must be a $ macro "
+                            "or a sequence of $ macros."))))))))
+

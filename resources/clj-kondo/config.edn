@@ -1,2 +1,5 @@
-{:hooks {:analyze-call {dompa.templates/$ hooks.dompa/$}}
- :linters {:dompa.templates/$-arg-validation {:level :warning}}}
+{:hooks {:analyze-call {dompa.templates/$ hooks.dompa/$
+                        dompa.templates/defhtml hooks.dompa/defhtml}}
+ :linters {:dompa.templates/$-arg-validation {:level :warning}
+           :dompa.templates/defhtml-arg-validation {:level :warning}}
+ :lint-as {dompa.templates/defhtml clojure.core/defn}}
