@@ -74,3 +74,53 @@
   ([nodes {:keys [void-nodes]}]
    (-> (node->html-reducer-fn void-nodes ->html)
        (reduce "" nodes))))
+
+(defmacro defhtml
+  "Creates a new function with `name` that outputs HTML.
+
+  Example usage:
+
+  ```clojure
+  (defhtml about-page [who]
+    ($ :div
+      ($ \"hello \" who)))
+
+  (about-page \"world\")
+  ```
+  "
+  [name & args-and-elements]
+  (let [[args & elements] args-and-elements]
+    `(defn ~name ~args
+       (->html (vector ~@elements)))))
+
+(defn $->flat-xf []
+  (fn [rf]
+    (letfn [(step [result input]
+              (if (sequential? input)
+                (reduce step result input)
+                (rf result input)))]
+      (fn
+        ([] (rf))
+        ([result] (rf result))
+        ([result input] (step result input))))))
+
+(defn $->flat [children]
+  (into [] ($->flat-xf) children))
+
+(defmacro $
+  "A helper that simplifies node creation. Particularly useful
+  where you need compile-time composition over run-time, like when
+  combined with the `defhtml` macro."
+  [name & opts]
+  `(if (string? ~name)
+     {:node/name  :dompa/text
+      :node/value (str ~name ~@opts)}
+     (let [opts# (list ~@opts)
+           first-opt# (first opts#)
+           attrs?# (and (map? first-opt#)
+                        (not (contains? first-opt# :node/name)))
+           attrs# (if attrs?# first-opt# {})
+           children# (if attrs?# (rest opts#) opts#)]
+       (cond-> {:node/name ~name}
+               attrs?# (assoc :node/attrs attrs#)
+               (seq children#) (assoc :node/children ($->flat children#))))))
