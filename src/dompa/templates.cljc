@@ -35,13 +35,3 @@
        (cond-> {:node/name ~name}
                attrs?# (assoc :node/attrs attrs#)
                (seq children#) (assoc :node/children (->flat children#))))))
-
-(defhtml test-page []
-  (let [n 123]
-    ($ :<>
-      ($ :div
-        ($ "hello world" n))
-      ($ "hello")
-      ($ :div))))
-
-(test-page)
