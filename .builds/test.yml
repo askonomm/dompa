@@ -12,3 +12,6 @@ tasks:
       curl -s "https://get.sdkman.io" | bash
       source "/home/build/.sdkman/bin/sdkman-init.sh"
       sdk install java
+
+  - test: |
+      clj -X:test

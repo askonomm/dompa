@@ -1,3 +1,11 @@
 {:deps {org.clojure/clojure {:mvn/version "1.12.2"}}
  :paths ["src" "resources/clj-kondo"]
- :aliases {:dev {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.09.22"}}}}}
+ :aliases {:dev {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.09.22"}}}
+           :test {:extra-paths ["test"]
+                  :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
+                                                                     :git/sha "dfb30dd6"}}
+                  :main-opts ["-m" "cognitect.test-runner"]
+                  :exec-fn cognitect.test-runner.api/test}
+           :coverage {:extra-paths ["test"]
+                      :extra-deps {cloverage/cloverage {:mvn/version "1.2.4"}}
+                      :main-opts   ["-m" "cloverage.coverage" "-p src -s test"]}}}
