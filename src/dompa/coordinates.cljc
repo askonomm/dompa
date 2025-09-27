@@ -2,6 +2,8 @@
   (:require [clojure.string :as str]))
 
 (defn- compose-reducer-fn
+  "Returns a reducer function with initial state of
+  `total-char-count` integer."
   [total-char-count]
   (fn [{:keys [char-type start-idx coordinates] :as state} [idx c]]
     (cond
@@ -67,6 +69,14 @@
                       :coordinates)}))
 
 (defn- coordinates->tag-name
+  "Parses the given `html` string between the indexes of `start`
+  and `end` for an HTML tag name.
+
+  ```html
+  <div>hello</div>
+  ```
+
+  Would become: `div`."
   [html [start end]]
   (let [value (subs html start end)]
     (if (str/starts-with? value "<")
@@ -77,11 +87,16 @@
       value)))
 
 (defn- name-coordinates-fn
+  "Returns a function with the initial state of an `html`
+  string, to be used to construct a sequence of `[index, name]`. "
   [html]
   (fn [idx coordinate]
     [idx (coordinates->tag-name html coordinate)]))
 
 (defn- last-by-tag-name-idx
+  "Gets the last coordinate matching the tag `name` that occurred
+  before `start`, for finding coordinates that should be merged
+  together."
   [html coordinates name start]
   (let [filter-fn (fn [[_ end]] (< end start))
         filtered-coordinates (filter filter-fn coordinates)
@@ -102,6 +117,8 @@
       coordinates)))
 
 (defn- unify-reducer-fn
+  "Returns a reducer function with the initial state of
+  a `html` string."
   [html]
   (fn [coordinates [start end]]
     (if (and (= \< (nth html start))
@@ -127,6 +144,8 @@
                     (reduce [] coordinates))})
 
 (defn- children
+  "Returns all the coordinates that belong between the given
+  `from` and `to` indexes."
   [coordinates [from to]]
   (->> coordinates
        (filter (fn [[iter-from iter-to]]
@@ -135,6 +154,8 @@
        (sort-by first)))
 
 (defn- without-children
+  "Returns all the coordinates that do not belong between
+  the given `parent-from` and `parent-to` indexes."
   [coordinates [parent-from parent-to]]
   (->> coordinates
        (remove (fn [[from to]]
@@ -181,7 +202,8 @@
         v (if (nil? v) true (normalize-html-attr-str v))]
     {k v}))
 
-(defn- html->str->node-attrs-reducer
+(defn- html->str->node-attrs-reducer-fn
+  "Returns a reducer function with initial state of `attrs-html`."
   [attrs-html]
   (fn [{:keys [start-idx has-attrs? attrs] :as state} [idx c]]
     (cond
@@ -220,7 +242,20 @@
 
       :else state)))
 
-(defn- html->str->attrs-html-str [html]
+(defn- html->attrs-html
+  "Transforms a given `html` string into a string portion of
+  just the attributes.
+
+  ```html
+  <div class=\"test\"></div>
+  ```
+
+  would become
+
+  ```
+  class=\"test\"
+  ```"
+  [html]
   (->> (subs html 1)
        (take-while #(not (contains? #{\> \/} %)))
        (partition-by #(= % \space))
@@ -244,18 +279,20 @@
   ```"
   [html]
   (when (str/starts-with? html "<")
-    (let [attrs-html (html->str->attrs-html-str html)
+    (let [attrs-html (html->attrs-html html)
           indexed-attrs-html (map-indexed vector attrs-html)
           default-reducer-state {:start-idx 0
                                  :has-attrs? false
                                  :attrs []}]
-      (as-> (html->str->node-attrs-reducer attrs-html) $
+      (as-> (html->str->node-attrs-reducer-fn attrs-html) $
             (reduce $ default-reducer-state indexed-attrs-html)
             (remove str/blank? (:attrs $))
             (map parse-html-attr-str $)
             (into {} $)))))
 
 (defn- construct-node
+  "Constructs a node map from `node-html` string and
+  its children nodes."
   [node-html node-children]
   (let [node-name (html-str->node-name node-html)
         node-attrs (html-str->node-attrs node-html)]

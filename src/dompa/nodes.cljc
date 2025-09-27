@@ -11,6 +11,8 @@
       (str attrs " " attr-name "=\"" v "\""))))
 
 (defn- node->html-reducer-fn
+  "Returns a reducer function with the initial state of `void-nodes`
+  set and `nodes->html-fn` function for recursive HTML creation."
   [void-nodes nodes->html-fn]
   (fn [html node]
     (cond
@@ -20,20 +22,19 @@
       (str html (nodes->html-fn (:node/children node)))
 
       ; otherwise business as usual
-      :else
-      (when-not (nil? node)
-        (let [node-name (-> node :node/name name)
-              node-attrs (reduce-kv node-attrs-reducer "" (-> node :node/attrs))]
-          (cond
-            (= (-> node :node/name) :dompa/text)
-            (str html (-> node :node/value))
+      (not (nil? node))
+      (let [node-name (-> node :node/name name)
+            node-attrs (reduce-kv node-attrs-reducer "" (-> node :node/attrs))]
+        (cond
+          (= (-> node :node/name) :dompa/text)
+          (str html (-> node :node/value))
 
-            (contains? void-nodes (-> node :node/name))
-            (str html "<" node-name node-attrs">")
+          (contains? void-nodes (-> node :node/name))
+          (str html "<" node-name node-attrs">")
 
-            :else
-            (let [value (nodes->html-fn (-> node :node/children))]
-              (str html "<" node-name node-attrs ">" value "</" node-name ">"))))))))
+          :else
+          (let [value (nodes->html-fn (-> node :node/children))]
+            (str html "<" node-name node-attrs ">" value "</" node-name ">")))))))
 
 (defn traverse
   "Recursively traverses given tree of `nodes` with a `traverser-fn`
@@ -110,7 +111,7 @@
 (defmacro $
   "A helper that simplifies node creation. Particularly useful
   where you need compile-time composition over run-time, like when
-  combined with the `defhtml` macro."
+  combined with the `defhtml` macro to create HTML string outputs."
   [name & opts]
   `(if (string? ~name)
      {:node/name  :dompa/text

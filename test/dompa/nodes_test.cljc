@@ -2,7 +2,7 @@
   (:require [clojure.test :refer [deftest is testing]]
             [dompa.nodes :refer [$]]))
 
-(deftest node-composition-test
+(deftest node-composition-macro-test
   (testing "a simple node"
     (is (= {:node/name     :div
             :node/children [{:node/name  :dompa/text
