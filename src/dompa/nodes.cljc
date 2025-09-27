@@ -109,9 +109,16 @@
   (into [] ($->flat-xf) children))
 
 (defmacro $
-  "A helper that simplifies node creation. Particularly useful
+  "Creates a new node. Particularly useful
   where you need compile-time composition over run-time, like when
-  combined with the `defhtml` macro to create HTML string outputs."
+  combined with the `defhtml` macro to create HTML string outputs.
+
+  Usage:
+
+  ```clojure
+  ($ :div
+    ($ \"hello world\" ))
+  ```"
   [name & opts]
   `(if (string? ~name)
      {:node/name  :dompa/text
