@@ -4,7 +4,7 @@ sources:
 tasks:
   - bootstrap: |
       sudo apt update && sudo apt upgrade -y
-      sudo apt-get install software-properties-common rlwrap curl -y
+      sudo apt-get install software-properties-common rlwrap curl zip unzip -y
       sudo apt update
       curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
       chmod +x linux-install.sh
