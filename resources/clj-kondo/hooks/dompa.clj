@@ -14,14 +14,13 @@
       (or (api/string-node? first-arg)
           (api/token-node? first-arg))
       (let [invalid-args (filter #(not (str-able? %)) rest-args)]
-        (doall
-          (for [invalid-arg invalid-args]
-            (api/reg-finding!
-              (assoc (meta invalid-arg)
-                :message (str "Invalid argument type. When creating a text node, "
-                              "only literal values (strings, numbers and symbols) "
-                              "are allowed.")
-                :type :dompa.templates/$-arg-validation)))))
+        (doseq [invalid-arg invalid-args]
+          (api/reg-finding!
+            (assoc (meta invalid-arg)
+              :message (str "Invalid argument type. When creating a text node, "
+                            "only literal values (strings, numbers and symbols) "
+                            "are allowed.")
+              :type :dompa.templates/$-arg-validation))))
 
       ; if the first arg is a keyword, then the second argument can only be
       ; a sequence or a map.
@@ -39,13 +38,12 @@
       (and (api/keyword-node? first-arg)
            (api/list-node? (first rest-args))
            (not (every? #(api/list-node? %) (rest rest-args))))
-      (doall
-        (for [arg (filter #(not (api/list-node? %)) rest-args)]
-          (api/reg-finding!
-            (assoc (meta arg)
-              :message (str "Invalid argument type. Argument must be a $ macro "
-                            "or a sequence of $ macros.")
-              :type :dompa.templates/$-arg-validation))))
+      (doseq [arg (filter #(not (api/list-node? %)) rest-args)]
+        (api/reg-finding!
+          (assoc (meta arg)
+            :message (str "Invalid argument type. Argument must be a $ macro "
+                          "or a sequence of $ macros.")
+            :type :dompa.templates/$-arg-validation)))
 
       ; if the first arg is a keyword, the second arg is a map, then from
       ; the second forwards everything has to be a list node
@@ -77,10 +75,9 @@
 
       ; rest of the arguments should be a list
       (not (every? #(api/list-node? %) rest-args))
-      (doall
-        (for [arg rest-args]
-          (api/reg-finding!
-            (assoc (meta arg)
-              :message (str "Invalid argument type. Argument must be a $ macro "
-                            "or a sequence of $ macros."))))))))
+      (doseq [arg rest-args]
+        (api/reg-finding!
+          (assoc (meta arg)
+            :message (str "Invalid argument type. Argument must be a $ macro "
+                          "or a sequence of $ macros.")))))))
 
