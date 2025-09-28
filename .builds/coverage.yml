@@ -1,8 +1,8 @@
 image: ubuntu/lts
-secrets:
-  - 46f739e5-4538-45dd-a79f-bf173b7a2ed9
 sources:
   - git@git.sr.ht:~asko/dompa
+secrets:
+  - fff5ce49-d98d-4b18-88ac-6f8f063c079a
 tasks:
   - bootstrap: |
       sudo apt update && sudo apt upgrade -y
