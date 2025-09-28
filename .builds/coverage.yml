@@ -33,7 +33,7 @@ tasks:
       ssh-add ~/.ssh/id_rsa
       ssh-keyscan git.sr.ht >> ~/.ssh/known_hosts
       git clone git@git.sr.ht:~asko/dompa-resources
-      mv coverage.svg dompa-resources/coverage.svg
+      mv ./dompa/coverage.svg dompa-resources/coverage.svg
       cd dompa-resources
       git add .
       git commit -m "Update"
