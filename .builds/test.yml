@@ -10,8 +10,9 @@ tasks:
       chmod +x linux-install.sh
       sudo ./linux-install.sh
       curl -s "https://get.sdkman.io" | bash
-      source "/home/build/.sdkman/bin/sdkman-init.sh"
+      source ~/.sdkman/bin/sdkman-init.sh
       sdk install java
 
   - test: |
+      source ~/.sdkman/bin/sdkman-init.sh
       clj -X:test
