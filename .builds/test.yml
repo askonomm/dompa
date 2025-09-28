@@ -15,4 +15,5 @@ tasks:
 
   - test: |
       source ~/.sdkman/bin/sdkman-init.sh
+      ls -la
       clj -X:test
