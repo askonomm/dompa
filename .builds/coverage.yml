@@ -21,6 +21,7 @@ tasks:
       clj -M:coverage
 
   - gen-badge: |
+      cd ./dompa
       curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
       source ~/.nvm/nvm.sh
       nvm install --lts
