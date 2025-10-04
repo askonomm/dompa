@@ -1,8 +1,17 @@
 (ns dompa.nodes-test
   (:require [clojure.test :refer [deftest is testing]]
-            [dompa.nodes :refer [$]]))
+            [dompa.nodes :refer [$ defhtml traverse ->html]]
+            [dompa.html :as html]))
 
-(deftest node-composition-macro-test
+(defhtml hello [who]
+  ($ :div
+     ($ "hello " who)))
+
+(deftest defhtml-test
+  (is (= "<div>hello world</div>"
+         (hello "world"))))
+
+(deftest $-test
   (testing "a simple node"
     (is (= {:node/name     :div
             :node/children [{:node/name  :dompa/text
@@ -22,3 +31,13 @@
                  ($ "hello"))
               ($ :span
                  ($ "world")))))))
+
+(deftest traverse-test
+  (let [traverser-fn (fn [node]
+                       (if (= :dompa/text (:node/name node))
+                         (assoc node :node/value "world hello")
+                         node))]
+    (is (= "<div>world hello</div>"
+           (-> (html/->nodes "<div>hello world</div>")
+               (traverse traverser-fn)
+               ->html)))))
