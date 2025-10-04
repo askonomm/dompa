@@ -4,13 +4,14 @@
 
 (deftest coordinates-test
   (testing "HTML to coordinates"
-    (is (=  [[0 15]
-             [5 9]]
+    (is (= {:coordinates [[0 15]
+                          [5 9]]
+            :html        "<div>hello</div>"}
            (html/->coordinates "<div>hello</div>")))))
 
 (deftest nodes-test
   (testing "HTML to nodes"
-    (is (= [{:node/name :div
+    (is (= [{:node/name     :div
              :node/attrs    {}
              :node/children [{:node/name  :dompa/text
                               :node/value "hello"}]}]
