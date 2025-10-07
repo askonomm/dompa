@@ -1,7 +1,7 @@
 name: Tests
 on: [push]
 jobs:
-  tests:
+  test-clj:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,4 +22,4 @@ jobs:
 
       - name: Run tests
         run: |
-          clj -X:test
+          clojure -X:test
