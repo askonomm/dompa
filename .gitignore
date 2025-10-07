@@ -5,3 +5,4 @@ dompa.iml
 .cpcache/
 target/
 .lsp/
+cljs-test-runner-out/

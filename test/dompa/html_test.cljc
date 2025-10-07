@@ -1,6 +1,8 @@
 (ns dompa.html-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [dompa.html :as html]))
+  #?(:clj (:require [clojure.test :refer [deftest is testing]]
+                    [dompa.html :as html]))
+  #?(:cljs (:require [cljs.test :refer-macros [deftest testing is]]
+                     [dompa.html :as html])))
 
 (deftest coordinates-test
   (testing "HTML to coordinates"

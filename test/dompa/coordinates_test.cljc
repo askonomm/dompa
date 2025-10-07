@@ -1,6 +1,8 @@
 (ns dompa.coordinates-test
-  (:require [clojure.test :refer [deftest testing is]]
-            [dompa.coordinates :as coordinates]))
+  #?(:clj (:require [clojure.test :refer [deftest testing is]]
+                    [dompa.coordinates :as coordinates]))
+  #?(:cljs (:require [cljs.test :refer-macros [deftest testing is]]
+                     [dompa.coordinates :as coordinates])))
 
 (deftest compose-test
   (testing "Create coordinates"

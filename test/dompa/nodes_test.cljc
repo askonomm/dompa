@@ -1,7 +1,10 @@
 (ns dompa.nodes-test
-  (:require [clojure.test :refer [deftest is testing]]
-            [dompa.nodes :refer [$ defhtml traverse ->html]]
-            [dompa.html :as html]))
+  #?(:clj (:require [clojure.test :refer [deftest is testing]]
+                    [dompa.nodes :refer [$ defhtml traverse ->html]]
+                    [dompa.html :as html]))
+  #?(:cljs (:require [cljs.test :refer-macros [deftest testing is]]
+                     [dompa.nodes :refer [$ defhtml traverse ->html]]
+                     [dompa.html :as html])))
 
 (defhtml hello [who]
   ($ :div
