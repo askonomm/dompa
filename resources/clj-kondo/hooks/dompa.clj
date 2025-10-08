@@ -20,7 +20,7 @@
               :message (str "Invalid argument type. When creating a text node, "
                             "only literal values (strings, numbers and symbols) "
                             "are allowed.")
-              :type :dompa.templates/$-arg-validation))))
+              :type :dompa.nodes/$-arg-validation))))
 
       ; if the first arg is a keyword, then the second argument can only be
       ; a sequence or a map.
@@ -30,8 +30,8 @@
                     (api/list-node? (first rest-args)))))
       (api/reg-finding!
         (assoc (meta (first rest-args))
-          :message (str "Invalid argument type. Argument must be a sequence or a map.")
-          :type :dompa.templates/$-arg-validation))
+          :message "Invalid argument type. Argument must be a sequence or a map."
+          :type :dompa.nodes/$-arg-validation))
 
       ; if the first arg is a keyword, the second arg is a list, then
       ; every arg has to be a list node.
@@ -43,7 +43,7 @@
           (assoc (meta arg)
             :message (str "Invalid argument type. Argument must be a $ macro "
                           "or a sequence of $ macros.")
-            :type :dompa.templates/$-arg-validation)))
+            :type :dompa.nodes/$-arg-validation)))
 
       ; if the first arg is a keyword, the second arg is a map, then from
       ; the second forwards everything has to be a list node
@@ -54,7 +54,7 @@
         (assoc (meta (second rest-args))
           :message (str "Invalid argument type. Argument must be a $ macro "
                         "or a sequence of $ macros.")
-          :type :dompa.templates/$-arg-validation)))))
+          :type :dompa.nodes/$-arg-validation)))))
 
 (defn defhtml [{:keys [node]}]
   (let [[_ first-arg second-arg & rest-args] (:children node)]

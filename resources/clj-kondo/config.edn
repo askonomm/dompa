@@ -1,5 +1,5 @@
 {:hooks {:analyze-call {dompa.nodes/$ hooks.dompa/$
-                        dompa.nodes/defhtml hooks.dompa/defhtml}}
+                        dompa.nodes.shared/defhtml hooks.dompa/defhtml}}
  :linters {:dompa.nodes/$-arg-validation {:level :warning}
-           :dompa.nodes/defhtml-arg-validation {:level :warning}}
- :lint-as {dompa.nodes/defhtml clojure.core/defn}}
+           :dompa.nodes.shared/defhtml-arg-validation {:level :warning}}
+ :lint-as {dompa.nodes.shared/defhtml clojure.core/defn}}
