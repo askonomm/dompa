@@ -47,3 +47,26 @@ jobs:
         run: |
           clojure -M:test-cljs
 
+  test-bb:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with: 
+          distribution: 'zulu'
+          java-version: '24'
+
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@13.4
+        with:
+          cli: 'latest'
+          clj-kondo: 'latest'
+          bb: 'latest'
+
+      - name: Run tests
+        run: |
+          bb test
+
