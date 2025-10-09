@@ -1,4 +1,4 @@
-(ns dompa.nodes.shared)
+(ns dompa.nodes)
 
 (def ^:private default-void-nodes
   #{:!doctype :area :base :br :col :embed :hr :img :input
@@ -30,7 +30,7 @@
           (str html (-> node :node/value))
 
           (contains? void-nodes (-> node :node/name))
-          (str html "<" node-name node-attrs">")
+          (str html "<" node-name node-attrs ">")
 
           :else
           (let [value (nodes->html-fn (-> node :node/children))]
@@ -93,3 +93,25 @@
   (let [[args & elements] args-and-elements]
     `(defn ~name ~args
        (->html [~@elements]))))
+
+(defn $
+  "Creates a new node
+  
+  Usage:
+
+  ```clojure
+  ($ :div
+    ($ \"hello world\" ))
+  ```"
+  [name & opts]
+  (if (string? name)
+    {:node/name  :dompa/text
+     :node/value (apply str name opts)}
+    (let [first-opt (first opts)
+          attrs? (and (map? first-opt)
+                      (not (contains? first-opt :node/name)))
+          attrs (if attrs? first-opt {})
+          children (if attrs? (rest opts) opts)]
+      (cond-> {:node/name name}
+        attrs? (assoc :node/attrs attrs)
+        (seq children) (assoc :node/children children)))))

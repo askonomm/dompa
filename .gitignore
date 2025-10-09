@@ -6,3 +6,4 @@ dompa.iml
 target/
 .lsp/
 cljs-test-runner-out/
+.calva/

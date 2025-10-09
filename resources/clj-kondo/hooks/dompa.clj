@@ -41,8 +41,8 @@
       (doseq [arg (filter #(not (api/list-node? %)) rest-args)]
         (api/reg-finding!
           (assoc (meta arg)
-            :message (str "Invalid argument type. Argument must be a $ macro "
-                          "or a sequence of $ macros.")
+            :message (str "Invalid argument type. Argument must be a $ node "
+                          "or a sequence of $ nodes.")
             :type :dompa.nodes/$-arg-validation)))
 
       ; if the first arg is a keyword, the second arg is a map, then from
@@ -52,8 +52,8 @@
            (not (every? #(api/list-node? %) (rest rest-args))))
       (api/reg-finding!
         (assoc (meta (second rest-args))
-          :message (str "Invalid argument type. Argument must be a $ macro "
-                        "or a sequence of $ macros.")
+          :message (str "Invalid argument type. Argument must be a $ node. "
+                        "or a sequence of $ nodes.")
           :type :dompa.nodes/$-arg-validation)))))
 
 (defn defhtml [{:keys [node]}]
@@ -64,20 +64,20 @@
       (api/reg-finding!
         (assoc (meta first-arg)
           :message "Invalid argument type. Binding name must be a symbol."
-          :type :dompa.templates/defhtml-arg-validation))
+          :type :dompa.nodes/defhtml-arg-validation))
 
       ; second argument should be a vector
       (not (api/vector-node? second-arg))
       (api/reg-finding!
         (assoc (meta second-arg)
           :message "Invalid argument type. Must be a vector of arguments."
-          :type :dompa.templates/defhtml-arg-validation))
+          :type :dompa.nodes/defhtml-arg-validation))
 
       ; rest of the arguments should be a list
       (not (every? #(api/list-node? %) rest-args))
       (doseq [arg rest-args]
         (api/reg-finding!
           (assoc (meta arg)
-            :message (str "Invalid argument type. Argument must be a $ macro "
-                          "or a sequence of $ macros.")))))))
+            :message (str "Invalid argument type. Argument must be a $ node "
+                          "or a sequence of $ nodes")))))))
 
