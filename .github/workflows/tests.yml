@@ -20,9 +20,15 @@ jobs:
           clj-kondo: 'latest'
           bb: 'latest'
 
-      - name: Run tests
+      - name: Test Babashka
         run: |
           bb test:bb
+        
+      - name: Test Clojure
+        run: |
           bb test:clj
+
+      - name: Test ClojureScript
+        run: |
           bb test:cljs
 
