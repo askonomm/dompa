@@ -1,8 +1,10 @@
 {:tasks
- {test {:extra-paths ["src" "test"]
-        :extra-deps {io.github.cognitect-labs/test-runner
-                     {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
-        :task (exec 'cognitect.test-runner.api/test)
-        :exec-args {:dirs ["test"]}
-        :org.babashka/cli {:coerce {:nses [:symbol]
-                                    :vars [:symbol]}}}}}
+ {test:bb {:extra-paths ["src" "test"]
+           :extra-deps {io.github.cognitect-labs/test-runner
+                        {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+           :task (exec 'cognitect.test-runner.api/test)
+           :exec-args {:dirs ["test"]}
+           :org.babashka/cli {:coerce {:nses [:symbol]
+                                       :vars [:symbol]}}}
+  test:clj (clojure "-X:test-clj")
+  test:cljs (clojure "-M:test-cljs")}}
