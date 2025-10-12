@@ -1,1 +1,1 @@
-{:config-paths ["../resources/clj-kondo"]}
+{:lint-as {dompa.nodes/defhtml clojure.core/defn}}
