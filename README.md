@@ -30,7 +30,7 @@ Which would result in a data structure such as:
 [{:node/name :div
   :node/attrs {}
   :node/children [{:node/name :dompa/text
-                   :value "hello "}
+                   :node/value "hello "}
                   {:node/name :strong
                    :node/attrs {}
                    :node/children [{:node/name :dompa/text
