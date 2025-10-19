@@ -1,6 +1,6 @@
 # Dompa
 
-[![builds.sr.ht status](https://builds.sr.ht/~asko/dompa/commits/main/test.yml.svg)](https://builds.sr.ht/~asko/dompa/commits/main/test.yml?)
-[![coverage](https://git.sr.ht/~asko/dompa-resources/blob/master/coverage.svg)](https://builds.sr.ht/~asko/dompa/commits/main/coverage.yml?)
+[![Tests](https://github.com/askonomm/dompa/actions/workflows/tests.yml/badge.svg)](https://github.com/askonomm/dompa/actions/workflows/tests.yml)
+[![CodeScene Average Code Health](https://codescene.io/projects/72504/status-badges/average-code-health)](https://codescene.io/projects/72504)
 
 A zero-dependency, runtime-agnostic HTML parser (and builder).

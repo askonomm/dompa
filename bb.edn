@@ -7,4 +7,5 @@
            :org.babashka/cli {:coerce {:nses [:symbol]
                                        :vars [:symbol]}}}
   test:clj (clojure "-X:test-clj")
-  test:cljs (clojure "-M:test-cljs")}}
+  test:cljs (clojure "-M:test-cljs")
+  coverage (clojure "-M:coverage")}}
