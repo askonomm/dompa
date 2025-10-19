@@ -11,6 +11,16 @@ Dompa is continuesly tested to run in the following Clojure runtimes:
 - ClojureScript
 - Babashka
 
+## Installation
+
+You can fetch it straight from GitHub by adding this to your `deps.edn`:
+
+```clojure
+{:deps {askonomm/dompa {:git/url "https://github.com/askonomm/dompa"
+                        :git/tag "v1.0.0"
+                        :git/sha "af50c1c03b4a4812de868fd74941801152e85bbf"}}}
+```
+
 ## Usage
 
 ### Parsing HTML
@@ -144,3 +154,12 @@ And of course making lists and such works the same as you'd imagine:
 ```
 
 Do note that when using the `defhtml` macro in ClojureScript, you have to use `:refer-macros` instead of `:refer`, due to the differences in how ClojureScript deals with macros.
+
+### Other 
+
+While the above covers the most common use cases of Dompa, such as turning HTML into a tree of nodes and vice versa, you can actually make use of the underlying lower-level stuff that makes it all work separately as well:
+
+- `dompa.coordinates/compose` - create coordinates (range positions) of HTML nodes from a HTML string
+- `dompa.coordinates/unify` - unify coordinates (merges the same block nodes together)
+- `dompa.coordinates/->nodes` - transform coordinates into a tree of nodes
+- `dompa.html/->coordinates` - transform HTML into coordinates
