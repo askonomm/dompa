@@ -3,163 +3,168 @@
 [![Tests](https://github.com/askonomm/dompa/actions/workflows/tests.yml/badge.svg)](https://github.com/askonomm/dompa/actions/workflows/tests.yml)
 [![CodeScene Average Code Health](https://codescene.io/projects/72504/status-badges/average-code-health)](https://codescene.io/projects/72504)
 
-A zero-dependency, runtime-agnostic HTML parser (and builder). 
+A zero-dependency, runtime-agnostic HTML parser and builder for Clojure.
 
-Dompa is continuesly tested to run in the following Clojure runtimes:
+Dompa aims to be a universal Clojure library, tested across:
 
-- Clojure
-- ClojureScript
-- Babashka
+  * Clojure
+  * ClojureScript
+  * Babashka
 
-## Installation
+-----
 
-You can fetch it straight from GitHub by adding this to your `deps.edn`:
+## 🚀 Installation
+
+Add Dompa to your `deps.edn` directly from GitHub:
 
 ```clojure
 {:deps {askonomm/dompa {:git/url "https://github.com/askonomm/dompa"
-                        :git/tag "v1.0.2"
-                        :git/sha "497a7dcf8456494cf2e9484e0bf2c400705fbe74"}}}
+                        :git/tag "v1.0.3"
+                        :git/sha "3ef74e6a0cfd3869aaa6859750024ee5c9b5ea8a"}}}
 ```
 
-## Usage
+-----
 
-### Parsing HTML
+## ✨ Usage
 
-You can use Dompa to parse an HTML string into a vector of nodes like this:
+### Parsing and Creating HTML
+
+Dompa makes it simple to convert HTML strings into Clojure data structures and back.
+
+**1. Parse HTML to Nodes**
+
+Use `dompa.html/->nodes` to parse an HTML string into a vector of nodes.
 
 ```clojure
 (ns my.app
-  (:require [dompa.html :as html])
+  (:require [dompa.html :as html]))
 
 (html/->nodes "<div>hello <strong>world</strong></div>")
 ```
 
-Which would result in a data structure such as:
+This produces a nested data structure:
 
 ```clojure
 [{:node/name :div
   :node/attrs {}
-  :node/children [{:node/name :dompa/text
-                   :node/value "hello "}
+  :node/children [{:node/name :dompa/text, :node/value "hello "}
                   {:node/name :strong
                    :node/attrs {}
-                   :node/children [{:node/name :dompa/text
-                                    :node/value "world"}]}]}]
+                   :node/children [{:node/name :dompa/text, :node/value "world"}]}]}]
 ```
 
-### Creating HTML
+**2. Create HTML from Nodes**
 
-You can turn a vector of nodes, such as those above, back into a HTML string as well:
+Use `dompa.nodes/->html` to convert the node structure back into an HTML string.
 
 ```clojure
 (ns my.app
-  (:require [dompa.nodes :as nodes])
+  (:require [dompa.nodes :as nodes]))
 
+;; ...using the nodes from the previous example
 (nodes/->html [...])
+;;=> "<div>hello <strong>world</strong></div>"
 ```
 
-Which would then result in a HTML string.
+-----
 
+### Traversing and Modifying Nodes
 
-### Traversing and modifying nodes
-
-There's a convenience function `dompa.nodes/traverse` which helps you traverse and modify a node tree, like this:
+Easily walk and transform the node tree with the `dompa.nodes/traverse` helper.
 
 ```clojure
 (ns my.app
   (:require [dompa.nodes :refer [traverse]])
+
+(def nodes-data [...]) ; Your node structure
 
 (defn update-text-value [node]
   (if (= :dompa/text (:node/name node))
     (assoc node :node/value "updated text")
     node))
 
-(traverse [...] update-text-value)
+(traverse nodes-data update-text-value)
 ```
 
-The above would update all text nodes to have the value of "updated text". If you wish to keep a node unchanged, just return the node as-is, and if you wish to remove a node, return `nil`. 
+> The function you provide to `traverse` dictates the outcome for each node:
+>
+>   * To **update a node**, return the modified node.
+>   * To **keep a node unchanged**, return the original node.
+>   * To **remove a node**, return `nil`.
 
-### Create nodes with the `$` helper function
+-----
 
-If you want a more convenient way of creating nodes, without having to create the full map manually, you can use the `dompa.nodes/$` helper function.
+### 🛠️ Building Nodes with the `$` Helper
 
-Creating a node is as simple as:
+For a more idiomatic and concise way to build node structures, use the `$` helper from `dompa.nodes`.
 
 ```clojure
 (ns my.app
-  (:require [dompa.nodes :refer [$]])
+  (:require [dompa.nodes :refer [$]]))
 
+;; A simple node
 ($ :button)
-```
 
-You can also add attributes to it:
-
-
-```clojure
-(ns my.app
-  (:require [dompa.nodes :refer [$]])
-
+;; A node with attributes
 ($ :button {:class "some-btn"})
-```
 
-And text nodes can be created by simply omitting the first node name keyword, like so:
-
-```clojure
-(ns my.app
-  (:require [dompa.nodes :refer [$]])
-
+;; A text node
 ($ "hello world")
-```
 
-Which now when you put both together can look like this:
-
-```clojure
-(ns my.app
-  (:require [dompa.nodes :refer [$]])
-
+;; Put it all together
 ($ :button {:class "some-btn"}
   ($ "hello world"))
 ```
 
-It's important to note that when creating a text node, it cannot have any children nodes, only literal values and/or vars, whereas non-text nodes can have children as either their second argument, if they lack a attribute map, or as their third argument if they have an argument map. 
+Nodes can be nested. Children are passed as the second argument (if no attributes) or the third argument (if attributes are present).
 
-### Create HTML with the `defhtml` helper macro
+-----
 
-If you want a more convenient way of creating functions that convert nodes into HTML on their own during compile-time, you can use the `defhtml` macro:
+### ⚡️ Compile-Time HTML with `defhtml`
+
+The `defhtml` macro creates functions that build and render HTML at compile time for maximum performance.
 
 ```clojure
 (ns my.app
-  (:require [dompa.nodes :refer [defhtml $]])
+  (:require [dompa.nodes :refer [defhtml $]]))
 
 (defhtml hello-page [who]
   ($ :div
     ($ "hello " who)))
 
 (hello-page "world")
+;;=> "<div>hello world</div>"
 ```
 
-And of course making lists and such works the same as you'd imagine:
+It works seamlessly with standard Clojure functions like `map`:
 
 ```clojure
 (ns my.app
-  (:require [dompa.nodes :refer [defhtml $]])
+  (:require [dompa.nodes :refer [defhtml $]]))
 
-(def names ["john" "mike" "jenna" "bob"])
+(def names ["john" "mike" "jenna"])
 
-(defhtml hello-page []
-  ($ :div
-    (map #($ (str "hello " %)) names)))
+(defhtml name-list []
+  ($ :ul
+    (map #($ :li %) names)))
 
-(hello-page)
+(name-list)
+;;=> "<ul><li>john</li><li>mike</li><li>jenna</li></ul>"
 ```
 
-Do note that when using the `defhtml` macro in ClojureScript, you have to use `:refer-macros` instead of `:refer`, due to the differences in how ClojureScript deals with macros.
+> **Note for ClojureScript:** Remember to use `:refer-macros` instead of `:refer` when requiring `defhtml`.
 
-### Other 
+-----
 
-While the above covers the most common use cases of Dompa, such as turning HTML into a tree of nodes and vice versa, you can actually make use of the underlying lower-level stuff that makes it all work separately as well:
+### ⚙️ Advanced: Lower-Level API
 
-- `dompa.coordinates/compose` - create coordinates (range positions) of HTML nodes from a HTML string
-- `dompa.coordinates/unify` - unify coordinates (merges the same block nodes together)
-- `dompa.coordinates/->nodes` - transform coordinates into a tree of nodes
-- `dompa.html/->coordinates` - transform HTML into coordinates
+Dompa also exposes the lower-level functions that power the parsing process. You can use these for more granular control:
+
+  * `dompa.html/->coordinates`: Transforms an HTML string into coordinate data.
+  * `dompa.coordinates/compose`: Creates range positions of nodes from an HTML string.
+  * `dompa.coordinates/unify`: Merges coordinates for the same block nodes.
+  * `dompa.coordinates/->nodes`: Transforms coordinate data into a final node tree.
+
+This version is more scannable and uses active language to guide the user.
+
+Would you like help with creating usage examples for a "cookbook" section in your documentation?
