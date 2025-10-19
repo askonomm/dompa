@@ -40,6 +40,13 @@
        :start-idx idx
        :coordinates (conj coordinates [start-idx idx])}
 
+      ; new tag starts while we were parsing another tag, 
+      ; handles void elements
+      (and (= :tag char-type) (= \< c))
+      {:char-type :tag
+       :start-idx idx
+       :coordinates (conj coordinates [start-idx (dec idx)])}
+
       ; otherwise don't record anything, just note
       ; the start of a tag
       (tag-starts? c char-type)
@@ -95,62 +102,69 @@
            (apply str))
       value)))
 
-(defn- name-coordinates-fn
-  "Returns a function with the initial state of an `html`
-  string, to be used to construct a sequence of `[index, name]`. "
-  [html]
-  (fn [idx coordinate]
-    [idx (coordinates->tag-name html coordinate)]))
+(defn- coordinate-info
+  "Determines if a coordinate is an opening tag, closing tag, or text."
+  [html [start end]]
+  (let [value (subs html start (inc end))]
+    (cond
+      (str/starts-with? value "</")
+      {:coord-type :closing, :coord-name (coordinates->tag-name html [start end])}
 
-(defn- last-by-tag-name-idx
-  "Gets the last coordinate matching the tag `name` that occurred
-  before `start`, for finding coordinates that should be merged
-  together."
-  [html coordinates name start]
-  (let [filter-fn (fn [[_ end]] (< end start))
-        filtered-coordinates (filter filter-fn coordinates)
-        index-fn (name-coordinates-fn html)
-        named-coordinates (map-indexed index-fn filtered-coordinates)]
-    (->> named-coordinates
-         (filter #(= name (-> % last)))
-         last
-         first)))
+      (str/starts-with? value "<")
+      {:coord-type :opening, :coord-name (coordinates->tag-name html [start end])}
 
-(defn- unify-one
-  [html coordinates [start end]]
-  (let [name (coordinates->tag-name html [start end])
-        matching-idx (last-by-tag-name-idx html coordinates name start)]
-    (if matching-idx
-      (let [[matching-start] (nth coordinates matching-idx)]
-        (assoc coordinates matching-idx [matching-start end]))
-      coordinates)))
+      :else
+      {:coord-type :text, :coord-name :dompa/text})))
 
-(defn- unify-reducer-fn
-  "Returns a reducer function with the initial state of
-  a `html` string."
-  [html]
-  (fn [coordinates [start end]]
-    (if (and (= \< (nth html start))
-             (= \/ (nth html (inc start) nil)))
-      (unify-one html coordinates [start end])
-      (conj coordinates [start end]))))
+(def ^:private void-elements
+  #{"area" "base" "br" "col" "embed" "hr" "img" 
+    "input" "link" "meta" "param" "source" "track" "wbr"})
+
+(defn- handle-opening-tag [{:keys [stack unified coord coord-name start]}]
+  (if (void-elements coord-name)
+    {:stack stack
+     :unified (conj unified coord)}
+    {:stack (conj stack {:name coord-name :start start})
+     :unified unified}))
+
+(defn- handle-closing-tag [{:keys [stack unified coord-name end]}]
+  (if-let [last-open (peek stack)]
+    (if (= coord-name (:name last-open))
+      {:stack (pop stack)
+       :unified (conj unified [(:start last-open) end])}
+      {:stack stack :unified unified})
+    {:stack stack :unified unified}))
+
+(defn- unify-reducer-fn [html]
+  (fn [{:keys [stack unified]} [start end :as coord]]
+    (let [{:keys [coord-type coord-name]} (coordinate-info html coord)]
+      (cond
+        (= coord-type :opening)
+        (handle-opening-tag {:stack stack
+                             :unified unified
+                             :coord coord
+                             :coord-name coord-name
+                             :start start})
+
+        (= coord-type :closing)
+        (handle-closing-tag {:stack stack
+                             :unified unified
+                             :coord-name coord-name
+                             :end end})
+
+        :else
+        {:stack stack
+         :unified (conj unified coord)}))))
 
 (defn unify
   "Joins together given `coordinates` that represent
-  one HTML node in `html`, without which `html` such as:
-
-  ```html
-  <div>hello</div>
-  ```
-
-  would result in 3 nodes (div, text, div), instead of 2 (div, text),
-  because non-unified coordinates are blind to the context
-  in which they live, having only had one pass over the
-  raw HTML string which composes the initial coordinates."
+  one HTML node in `html`, using a stack-based approach to correctly
+  handle nested and void tags."
   [{:keys [html coordinates]}]
-  {:html html
-   :coordinates (-> (unify-reducer-fn html)
-                    (reduce [] coordinates))})
+  (let [initial-state {:stack [], :unified []}
+        result (reduce (unify-reducer-fn html) initial-state coordinates)]
+    {:html html
+     :coordinates (sort-by first (:unified result))}))
 
 (defn- children
   "Returns all the coordinates that belong between the given

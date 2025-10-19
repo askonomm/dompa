@@ -1,7 +1,7 @@
 (ns dompa.nodes)
 
 (def ^:private default-void-nodes
-  #{:!doctype :area :base :br :col :embed :hr :img :input
+  #{:!doctype :!DOCTYPE :area :base :br :col :embed :hr :img :input
     :link :meta :source :track :wbr})
 
 (defn- node-attrs-reducer [attrs k v]

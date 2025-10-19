@@ -66,13 +66,13 @@
   (testing "Unify coordinates with invalid HTML"
     (let [html "<div>hello"]
       (is (= {:html        html
-              :coordinates [[0 4] [5 9]]}
+              :coordinates [[5 9]]}
              (-> (coordinates/compose html)
                  coordinates/unify))))
 
     (let [html "<div>hello</span>"]
       (is (= {:html        html
-              :coordinates [[0 4] [5 9]]}
+              :coordinates [[5 9]]}
              (-> (coordinates/compose html)
                  coordinates/unify)))))
 
