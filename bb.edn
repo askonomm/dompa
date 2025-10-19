@@ -8,4 +8,10 @@
                                        :vars [:symbol]}}}
   test:clj (clojure "-X:test-clj")
   test:cljs (clojure "-M:test-cljs")
-  coverage (clojure "-M:coverage")}}
+  coverage (clojure "-M:coverage")
+  quickdoc {:doc "Invoke quickdoc"
+            :extra-deps {io.github.borkdude/quickdoc {:git/tag "v0.2.5", :git/sha "25784ca"}}
+            :task (exec 'quickdoc.api/quickdoc)
+            :exec-args {:git/branch "main"
+                        :github/repo "https://github.com/askonomm/dompa"
+                        :source-paths ["src/dompa"]}}}}
