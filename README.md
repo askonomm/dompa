@@ -67,7 +67,7 @@ There's a convenience function `dompa.nodes/traverse` which helps you traverse a
 
 ```clojure
 (ns my.app
-  (:require [dompa.nodes :as nodes])
+  (:require [dompa.nodes :refer [traverse]])
 
 (defn update-text-value [node]
   (if (= :dompa/text (:node/name node))
