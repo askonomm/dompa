@@ -117,7 +117,7 @@
       {:coord-type :text, :coord-name :dompa/text})))
 
 (def ^:private void-elements
-  #{"area" "base" "br" "col" "embed" "hr" "img" 
+  #{"!DOCTYPE" "!doctype" "area" "base" "br" "col" "embed" "hr" "img" 
     "input" "link" "meta" "param" "source" "track" "wbr"})
 
 (defn- handle-opening-tag [{:keys [stack unified coord coord-name start]}]
@@ -201,9 +201,7 @@
   "Parses a given HTML node attribute string into a
   key-value pair."
   [attr]
-  (->> (partition-by #(= % \=) attr)
-       (filter #(not= (-> % first) \=))
-       (map #(reduce str %))))
+  (str/split attr #"=" 2))
 
 (defn- normalize-html-attr-str
   "Normalizes a given HTML attribute string. If it
@@ -221,9 +219,8 @@
   treated as boolean attributes, and are always `true`."
   [html-attr-str]
   (let [[k v] (html-attr-str->k-v html-attr-str)
-        k (keyword k)
-        v (if (nil? v) true (normalize-html-attr-str v))]
-    {k v}))
+        k (keyword k)]
+    {k (if (nil? v) true (normalize-html-attr-str v))}))
 
 (defn- html->str->node-attrs-reducer-fn
   "Returns a reducer function with initial state of `attrs-html`."
