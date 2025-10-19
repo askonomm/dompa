@@ -1,6 +1,18 @@
 (ns dompa.coordinates
   (:require [clojure.string :as str]))
 
+(defn- text-ended-and-tag-begins? [char char-type]
+  (and (= :text char-type)
+       (= \< char)))
+
+(defn- text-ended-by-html-ending? [char-type total-char-count idx]
+  (and (= :text char-type)
+       (= (dec total-char-count) idx)))
+
+(defn- tag-starts? [char char-type]
+  (and (not= :text char-type)
+       (= \< char)))
+
 (defn- compose-reducer-fn
   "Returns a reducer function with initial state of
   `total-char-count` integer."
@@ -16,24 +28,21 @@
 
       ; text ended, tag begins, which means we can
       ; record text node coordinates
-      (and (= :text char-type)
-           (= \< c))
+      (text-ended-and-tag-begins? c char-type)
       {:char-type :tag
        :start-idx idx
        :coordinates (conj coordinates [start-idx (dec idx)])}
 
       ; text ended by HTML ending, record text node
       ; coordinates
-      (and (= :text char-type)
-           (= (dec total-char-count) idx))
+      (text-ended-by-html-ending? char-type total-char-count idx)
       {:char-type nil
        :start-idx idx
        :coordinates (conj coordinates [start-idx idx])}
 
       ; otherwise don't record anything, just note
       ; the start of a tag
-      (and (not= :text char-type)
-           (= \< c))
+      (tag-starts? c char-type)
       {:char-type :tag
        :start-idx idx
        :coordinates coordinates}
