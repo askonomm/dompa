@@ -270,7 +270,7 @@
        (partition-by #(= % \space))
        (drop 1)
        flatten
-       (reduce str)
+       (apply str)
        str/trim))
 
 (defn- html-str->node-attrs
