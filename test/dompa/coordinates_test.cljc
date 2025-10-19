@@ -107,6 +107,14 @@
                coordinates/compose
                coordinates/unify
                coordinates/->nodes))))
+  
+  (testing "Create nodes from self-closing tags"
+    (is (= [{:node/name  :hr
+             :node/attrs {}}]
+           (-> "<hr />"
+               coordinates/compose
+               coordinates/unify
+               coordinates/->nodes))))
 
   (testing "Create nodes with attributes"
     (is (= [{:node/name     :div
