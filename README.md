@@ -17,8 +17,8 @@ You can fetch it straight from GitHub by adding this to your `deps.edn`:
 
 ```clojure
 {:deps {askonomm/dompa {:git/url "https://github.com/askonomm/dompa"
-                        :git/tag "v1.0.1"
-                        :git/sha "35de9bc8aaaa165ec3f2efb04691bdca3dd5e446"}}}
+                        :git/tag "v1.0.2"
+                        :git/sha "497a7dcf8456494cf2e9484e0bf2c400705fbe74"}}}
 ```
 
 ## Usage
