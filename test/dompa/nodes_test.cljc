@@ -14,6 +14,17 @@
   (is (= "<div>hello world</div>"
          (hello "world"))))
 
+(defhtml list-items [items]
+  ($ :ul
+     (->> items
+          (map (fn [item]
+                ($ :li ($ item))))
+          (into []))))
+
+(deftest list-items-test
+  (is (= "<ul><li>one</li><li>two</li><li>three</li></ul>"
+         (list-items ["one" "two" "three"]))))
+
 (deftest $-test
   (testing "a simple node"
     (is (= {:node/name     :div

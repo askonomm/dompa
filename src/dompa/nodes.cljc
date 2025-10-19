@@ -92,7 +92,7 @@
   [name & args-and-elements]
   (let [[args & elements] args-and-elements]
     `(defn ~name ~args
-       (->html [~@elements]))))
+       (->html (vector ~@elements)))))
 
 (defn $
   "Creates a new node
@@ -114,4 +114,4 @@
           children (if attrs? (rest opts) opts)]
       (cond-> {:node/name name}
         attrs? (assoc :node/attrs attrs)
-        (seq children) (assoc :node/children children)))))
+        (seq children) (assoc :node/children (flatten children))))))
