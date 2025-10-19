@@ -47,10 +47,12 @@ This produces a nested data structure:
 ```clojure
 [{:node/name :div
   :node/attrs {}
-  :node/children [{:node/name :dompa/text, :node/value "hello "}
+  :node/children [{:node/name :dompa/text
+                   :node/value "hello "}
                   {:node/name :strong
                    :node/attrs {}
-                   :node/children [{:node/name :dompa/text, :node/value "world"}]}]}]
+                   :node/children [{:node/name :dompa/text
+                                    :node/value "world"}]}]}]
 ```
 
 **2. Create HTML from Nodes**
