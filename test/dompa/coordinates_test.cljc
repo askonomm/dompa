@@ -115,6 +115,16 @@
                coordinates/compose
                coordinates/unify
                coordinates/->nodes))))
+  
+  (testing "Parse attributes with forward slashes in them"
+    (is (=  [{:node/name :meta, 
+              :node/attrs {:name "route-pattern", 
+                           :content "/:user_id/:repository", 
+                           :data-turbo-transient true}}]
+           (-> "<meta name=\"route-pattern\" content=\"/:user_id/:repository\" data-turbo-transient>"
+               coordinates/compose
+               coordinates/unify
+               coordinates/->nodes))))
 
   (testing "Create nodes with attributes"
     (is (= [{:node/name     :div

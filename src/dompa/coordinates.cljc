@@ -265,13 +265,16 @@
   class=\"test\"
   ```"
   [html]
-  (->> (subs html 1)
-       (take-while #(not (contains? #{\> \/} %)))
-       (partition-by #(= % \space))
-       (drop 1)
-       flatten
-       (apply str)
-       str/trim))
+  (let [attrs-html (->> (subs html 1)
+                        (take-while #(not (contains? #{\>} %)))
+                        (partition-by #(= % \space))
+                        (drop 1)
+                        flatten
+                        (apply str)
+                        str/trim)]
+    (if (= \/ (last attrs-html))
+      (subs attrs-html 0 (dec (count attrs-html)))
+      attrs-html)))
 
 (defn- html-str->node-attrs
   "Turns a given `html` string into an attribute map, e.g:
@@ -294,10 +297,10 @@
                                  :has-attrs? false
                                  :attrs []}]
       (as-> (html->str->node-attrs-reducer-fn attrs-html) $
-            (reduce $ default-reducer-state indexed-attrs-html)
-            (remove str/blank? (:attrs $))
-            (map parse-html-attr-str $)
-            (into {} $)))))
+        (reduce $ default-reducer-state indexed-attrs-html)
+        (remove str/blank? (:attrs $))
+        (map parse-html-attr-str $)
+        (into {} $)))))
 
 (defn- construct-node
   "Constructs a node map from `node-html` string and
@@ -306,9 +309,9 @@
   (let [node-name (html-str->node-name node-html)
         node-attrs (html-str->node-attrs node-html)]
     (cond-> {:node/name node-name}
-            (= node-name :dompa/text) (assoc :node/value node-html)
-            (not (nil? node-attrs)) (assoc :node/attrs node-attrs)
-            (not (nil? node-children)) (assoc :node/children node-children))))
+      (= node-name :dompa/text) (assoc :node/value node-html)
+      (not (nil? node-attrs)) (assoc :node/attrs node-attrs)
+      (not (nil? node-children)) (assoc :node/children node-children))))
 
 (defn ->nodes
   "Transform given `html` according to given `coordinates` into
