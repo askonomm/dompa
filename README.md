@@ -164,7 +164,3 @@ Dompa also exposes the lower-level functions that power the parsing process. You
   * `dompa.coordinates/compose`: Creates range positions of nodes from an HTML string.
   * `dompa.coordinates/unify`: Merges coordinates for the same block nodes.
   * `dompa.coordinates/->nodes`: Transforms coordinate data into a final node tree.
-
-This version is more scannable and uses active language to guide the user.
-
-Would you like help with creating usage examples for a "cookbook" section in your documentation?
