@@ -88,11 +88,11 @@ Easily walk and transform the node tree with the `dompa.nodes/traverse` helper.
 (traverse nodes-data update-text-value)
 ```
 
-> The function you provide to `traverse` dictates the outcome for each node:
->
->   * To **update a node**, return the modified node.
->   * To **keep a node unchanged**, return the original node.
->   * To **remove a node**, return `nil`.
+The function you provide to `traverse` dictates the outcome for each node:
+
+* To **update a node**, return the modified node.
+* To **keep a node unchanged**, return the original node.
+* To **remove a node**, return `nil`.
 
 -----
 
@@ -118,7 +118,7 @@ For a more idiomatic and concise way to build node structures, use the `$` helpe
   ($ "hello world"))
 ```
 
-Nodes can be nested. Children are passed as the second argument (if no attributes) or the third argument (if attributes are present).
+All nodes (except text nodes) can be nested. Children are passed as the second argument (if no attributes) or the third argument (if attributes are present).
 
 -----
 
@@ -145,7 +145,7 @@ It works seamlessly with standard Clojure functions like `map`:
   (:require [dompa.nodes :refer [defhtml $]]))
 
 (def names ["john" "mike" "jenna"])
-
+s
 (defhtml name-list []
   ($ :ul
     (map #($ :li %) names)))
@@ -154,7 +154,7 @@ It works seamlessly with standard Clojure functions like `map`:
 ;;=> "<ul><li>john</li><li>mike</li><li>jenna</li></ul>"
 ```
 
-> **Note for ClojureScript:** Remember to use `:refer-macros` instead of `:refer` when requiring `defhtml`.
+**Note for ClojureScript:** Remember to use `:refer-macros` instead of `:refer` when requiring `defhtml`.
 
 -----
 
@@ -162,7 +162,7 @@ It works seamlessly with standard Clojure functions like `map`:
 
 Dompa also exposes the lower-level functions that power the parsing process. You can use these for more granular control:
 
-  * `dompa.html/->coordinates`: Transforms an HTML string into coordinate data.
-  * `dompa.coordinates/compose`: Creates range positions of nodes from an HTML string.
-  * `dompa.coordinates/unify`: Merges coordinates for the same block nodes.
-  * `dompa.coordinates/->nodes`: Transforms coordinate data into a final node tree.
+* `dompa.coordinates/compose`: Creates range positions of nodes from an HTML string.
+* `dompa.coordinates/unify`: Merges coordinates for the same block nodes.
+* `dompa.coordinates/->nodes`: Transforms coordinate data into a final node tree.
+* `dompa.html/->coordinates`: Transforms an HTML string into coordinate data (result of `dompa.coordinates/compose` and `dompa.coordinates/unify`).
