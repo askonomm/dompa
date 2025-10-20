@@ -93,6 +93,7 @@ The function you provide to `traverse` dictates the outcome for each node:
 * To **update a node**, return the modified node.
 * To **keep a node unchanged**, return the original node.
 * To **remove a node**, return `nil`.
+* To **replace a node with many nodes on the same level**, return a [fragment node](#fragment-nodes), which will be replaced by its children during HTML transformation.
 
 -----
 
@@ -119,6 +120,23 @@ For a more idiomatic and concise way to build node structures, use the `$` helpe
 ```
 
 All nodes (except text nodes) can be nested. Children are passed as the second argument (if no attributes) or the third argument (if attributes are present).
+
+#### Fragment nodes
+
+You can also use fragment nodes, which are nodes with a name of `:<>` and whose children replace themselves, for example:
+
+```clojure
+(ns my.app
+  (:require [dompa.nodes :refer [$ ->html]]))
+
+(->html [($ :button
+          ($ :<>
+            ($ "hello ")
+            ($ "world")))])
+;;=> <div>hello world</div>
+```
+
+Note that the replacement happens only in the `->html` function during the transformation process, so if you use a fragment node in your node tree and wonder why it hasn't been replaced by its children, it's because of that.
 
 -----
 
