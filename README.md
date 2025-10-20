@@ -145,7 +145,7 @@ It works seamlessly with standard Clojure functions like `map`:
   (:require [dompa.nodes :refer [defhtml $]]))
 
 (def names ["john" "mike" "jenna"])
-s
+
 (defhtml name-list []
   ($ :ul
     (map #($ :li %) names)))
