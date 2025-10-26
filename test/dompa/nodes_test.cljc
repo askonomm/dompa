@@ -1,9 +1,12 @@
 (ns dompa.nodes-test
-  #?(:clj (:require [clojure.test :refer [deftest is testing]]
-                    [dompa.nodes :refer [$ defhtml traverse ->html]]
-                    [dompa.html :as html]))
+  #?(:clj (:require
+           [clojure.test :refer [deftest is testing]]
+           [clojure.zip :as zip]
+           [dompa.html :as html]
+           [dompa.nodes :as nodes :refer [$ defhtml]]))
   #?(:cljs (:require [cljs.test :refer-macros [deftest testing is]]
-                     [dompa.nodes :refer [$ traverse ->html] :refer-macros [defhtml]]
+                     [clojure.zip :as zip]
+                     [dompa.nodes :as nodes :refer [$] :refer-macros [defhtml]]
                      [dompa.html :as html])))
 
 (defhtml hello [who]
@@ -18,7 +21,7 @@
   ($ :ul
      (->> items
           (map (fn [item]
-                ($ :li ($ item))))
+                 ($ :li ($ item))))
           (into []))))
 
 (deftest list-items-test
@@ -53,5 +56,17 @@
                          node))]
     (is (= "<div>world hello</div>"
            (-> (html/->nodes "<div>hello world</div>")
-               (traverse traverser-fn)
-               ->html)))))
+               (nodes/traverse traverser-fn)
+               nodes/->html)))))
+
+(deftest zip-test
+  (let [nodes (html/->nodes "<div><p>hello</p><p>world</p></div>")
+        zipper (nodes/zip (first nodes))]
+    (is (= :div
+           (:node/name (zip/node zipper))))
+    (is (= "hello"
+           (-> zipper
+               zip/down
+               zip/down
+               zip/node
+               :node/value)))))
