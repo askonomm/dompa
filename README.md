@@ -95,6 +95,23 @@ The function you provide to `traverse` dictates the outcome for each node:
 * To **remove a node**, return `nil`.
 * To **replace a node with many nodes on the same level**, return a [fragment node](#fragment-nodes), which will be replaced by its children during HTML transformation.
 
+#### Zipping
+
+You can also use the `dompa.nodes/zip` function to create a [zipper](https://clojuredocs.org/clojure.zip/zipper) of a node, i.e:
+
+```clojure
+(ns my.app
+  (:require [dompa.nodes :as nodes]
+            [clojure.zip :as zip])
+
+(->> (nodes/zip {..node})
+     zip/down
+     zip/node)
+```
+
+And of course you can use this in combination with the `traverse` method as well, since the `traverse` method always operates on a single node at a time, 
+and the zipper always starts with a root node, the two complement each other well.
+
 -----
 
 ### 🛠️ Building Nodes with the `$` Helper
