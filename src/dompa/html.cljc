@@ -1,6 +1,6 @@
 (ns dompa.html
   (:require
-    [dompa.coordinates :as coordinates]))
+   [dompa.coordinates :as coordinates]))
 
 (defn ->coordinates
   "Transform a `html` string into a vector of coordinates
