@@ -1,4 +1,5 @@
-(ns dompa.nodes)
+(ns dompa.nodes
+  (:require [clojure.zip :as zip]))
 
 (def ^:private default-void-nodes
   #{:!doctype :!DOCTYPE :area :base :br :col :embed :hr :img :input
@@ -49,6 +50,18 @@
             (conj updated-nodes (assoc updated-node :node/children children)))
           updated-nodes))
       (reduce [] nodes)))
+
+(defn zip
+  "Creates a zipper for given a given `node`."
+  [node]
+  (zip/zipper
+    (fn branch? [node]
+      (boolean (seq (:node/children node))))
+    (fn children [node]
+      (:node/children node))
+    (fn make-node [node children]
+      (assoc node :node/children children))
+    node))
 
 (defn ->html
   "Transform a vector of `nodes` into an HTML string.

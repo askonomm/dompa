@@ -2,6 +2,7 @@
  :paths ["src" "resources"]
  :aliases {:dev {:extra-paths ["resources/clj-kondo"]
                  :extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.09.22"}}}
+           :test {:extra-paths ["test"]}
            :test-clj {:extra-paths ["test"]
                       :extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
                                                                          :git/sha "dfb30dd6"}}
