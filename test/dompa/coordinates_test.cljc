@@ -1,8 +1,12 @@
 (ns dompa.coordinates-test
-  #?(:clj (:require [clojure.test :refer [deftest testing is]]
-                    [dompa.coordinates :as coordinates]))
-  #?(:cljs (:require [cljs.test :refer-macros [deftest testing is]]
-                     [dompa.coordinates :as coordinates])))
+  #?(:clj
+     (:require
+      [clojure.test :refer [deftest testing is]]
+      [dompa.coordinates :as coordinates]))
+  #?(:cljs
+     (:require
+      [cljs.test :refer-macros [deftest testing is]]
+      [dompa.coordinates :as coordinates])))
 
 (deftest compose-test
   (testing "Create coordinates"
@@ -107,7 +111,7 @@
                coordinates/compose
                coordinates/unify
                coordinates/->nodes))))
-  
+
   (testing "Create nodes from self-closing tags"
     (is (= [{:node/name  :hr
              :node/attrs {}}]
@@ -115,16 +119,16 @@
                coordinates/compose
                coordinates/unify
                coordinates/->nodes))))
-  
+
   (testing "Parse attributes with forward slashes in them"
-    (is (=  [{:node/name :meta, 
-              :node/attrs {:name "route-pattern", 
-                           :content "/:user_id/:repository", 
+    (is (=  [{:node/name :meta,
+              :node/attrs {:name "route-pattern",
+                           :content "/:user_id/:repository",
                            :data-turbo-transient true}}]
-           (-> "<meta name=\"route-pattern\" content=\"/:user_id/:repository\" data-turbo-transient>"
-               coordinates/compose
-               coordinates/unify
-               coordinates/->nodes))))
+            (-> "<meta name=\"route-pattern\" content=\"/:user_id/:repository\" data-turbo-transient>"
+                coordinates/compose
+                coordinates/unify
+                coordinates/->nodes))))
 
   (testing "Create nodes with attributes"
     (is (= [{:node/name     :div

@@ -1,5 +1,6 @@
 (ns dompa.nodes
-  (:require [clojure.zip :as zip]))
+  (:require
+   [clojure.zip :as zip]))
 
 (def ^:private default-void-nodes
   #{:!doctype :!DOCTYPE :area :base :br :col :embed :hr :img :input
@@ -35,7 +36,9 @@
 
           :else
           (let [value (nodes->html-fn (-> node :node/children))]
-            (str html "<" node-name node-attrs ">" value "</" node-name ">")))))))
+            (str html "<" node-name node-attrs ">" value "</" node-name ">"))))
+
+      :else "")))
 
 (defn traverse
   "Recursively traverses given tree of `nodes` with a `traverser-fn`
@@ -55,13 +58,13 @@
   "Creates a zipper for given a given `node`."
   [node]
   (zip/zipper
-    (fn branch? [node]
-      (boolean (seq (:node/children node))))
-    (fn children [node]
-      (:node/children node))
-    (fn make-node [node children]
-      (assoc node :node/children children))
-    node))
+   (fn branch? [node]
+     (boolean (seq (:node/children node))))
+   (fn children [node]
+     (:node/children node))
+   (fn make-node [node children]
+     (assoc node :node/children children))
+   node))
 
 (defn ->html
   "Transform a vector of `nodes` into an HTML string.
@@ -107,7 +110,7 @@
     `(defn ~name ~args
        (->html (vector ~@elements)))))
 
-(defn $
+(defn $$
   "Creates a new node
   
   Usage:
@@ -128,3 +131,67 @@
       (cond-> {:node/name name}
         attrs? (assoc :node/attrs attrs)
         (seq children) (assoc :node/children (flatten children))))))
+
+(defn- list-of-one?
+  [coll]
+  (and (sequential? coll)
+       (= (count coll) 1)))
+
+(defn- list-of-many?
+  [coll]
+  (and (sequential? coll)
+       (> (count coll) 1)))
+
+(defn- nodes-from-opt
+  [opt]
+  (cond (map? opt)
+        opt
+
+        (list-of-many? opt)
+        {:node/name :<>
+         :node/children opt}
+
+        (list-of-one? opt)
+        (first opt)
+
+        :else
+        {:node/name :dompa/text
+         :node/value (str opt)}))
+
+(defn- node-from-opts
+  [opts]
+  (let [first-opt (first opts)
+        second-op (second opts)
+        attrs? (and (map? second-op)
+                    (not (contains? second-op :node/name)))
+        attrs (if attrs? second-op {})
+        children-opts (if attrs? (drop 2 opts) (rest opts))
+        children-nodes (->> children-opts
+                            (map nodes-from-opt)
+                            flatten)]
+    (cond-> {:node/name first-opt}
+      attrs? (assoc :node/attrs attrs)
+      (seq children-nodes) (assoc :node/children children-nodes))))
+
+(defn- nodes-from-opts
+  [opts]
+  (let [nodes (->> (remove nil? opts)
+                   (map nodes-from-opt))]
+    (if (> (count nodes) 1)
+      {:node/name :<>
+       :node/children nodes}
+      (first nodes))))
+
+(defn $
+  "Creates a new node
+  
+  Usage:
+
+  ```clojure
+  ($ :div
+    ($ \"hello world\" ))
+  ```"
+  [& opts]
+  (if (keyword? (first opts))
+    (node-from-opts opts)
+    (nodes-from-opts opts)))
