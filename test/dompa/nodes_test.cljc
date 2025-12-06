@@ -1,13 +1,16 @@
 (ns dompa.nodes-test
-  #?(:clj (:require
-           [clojure.test :refer [deftest is testing]]
-           [clojure.zip :as zip]
-           [dompa.html :as html]
-           [dompa.nodes :as nodes :refer [$ defhtml]]))
-  #?(:cljs (:require [cljs.test :refer-macros [deftest testing is]]
-                     [clojure.zip :as zip]
-                     [dompa.nodes :as nodes :refer [$] :refer-macros [defhtml]]
-                     [dompa.html :as html])))
+  #?(:clj
+     (:require
+      [clojure.test :refer [deftest is testing]]
+      [clojure.zip :as zip]
+      [dompa.html :as html]
+      [dompa.nodes :as nodes :refer [$ defhtml]]))
+  #?(:cljs
+     (:require
+      [cljs.test :refer-macros [deftest testing is]]
+      [clojure.zip :as zip]
+      [dompa.nodes :as nodes :refer [$] :refer-macros [defhtml]]
+      [dompa.html :as html])))
 
 (defhtml hello [who]
   ($ :div
@@ -21,7 +24,7 @@
   ($ :ul
      (->> items
           (map (fn [item]
-                 ($ :li ($ item))))
+                 ($ :li item)))
           (into []))))
 
 (deftest list-items-test
@@ -33,7 +36,7 @@
     (is (= {:node/name     :div
             :node/children [{:node/name  :dompa/text
                              :node/value "hello world"}]}
-           ($ :div ($ "hello world")))))
+           ($ :div "hello world"))))
 
   (testing "a fragment node"
     (is (= {:node/name     :<>
@@ -47,7 +50,71 @@
               ($ :span
                  ($ "hello"))
               ($ :span
-                 ($ "world")))))))
+                 ($ "world"))))))
+
+  (testing "a nil node"
+    (is (= nil
+           ($ nil))))
+
+  (testing "a string node"
+    (is (= {:node/name :dompa/text
+            :node/value "hello world"}
+           ($ "hello world"))))
+
+  (testing "a node of multiple sub-nodes"
+    (is (= {:node/name :<>
+            :node/children [{:node/name :dompa/text
+                             :node/value "hello"}
+                            {:node/name :dompa/text
+                             :node/value "12345"}
+                            {:node/name :dompa/text
+                             :node/value "123.3"}
+                            {:node/name :dompa/text
+                             :node/value "world"}]}
+           ($ "hello" 12345 nil 123.3 "world")))
+
+    (is (= {:node/name :<>
+            :node/children [{:node/name :dompa/text
+                             :node/value "hello"}
+                            {:node/name :dompa/text
+                             :node/value "12345"}
+                            {:node/name :<>
+                             :node/children [{:node/name :dompa/text
+                                              :node/value "w"}
+                                             {:node/name :dompa/text
+                                              :node/value "o"}
+                                             {:node/name :dompa/text
+                                              :node/value "r"}
+                                             {:node/name :dompa/text
+                                              :node/value "l"}
+                                             {:node/name :dompa/text
+                                              :node/value "d"}]}]}
+           ($ "hello" 12345 (map #($ %) ["w" "o" "r" "l" "d"]))))
+
+    (is (= {:node/name :<>
+            :node/children [{:node/name :dompa/text
+                             :node/value "hello"}
+                            {:node/name :<>
+                             :node/children [{:node/name :dompa/text
+                                              :node/value "w"}
+                                             {:node/name :<>
+                                              :node/children [{:node/name :dompa/text
+                                                               :node/value "o"}
+                                                              {:node/name :dompa/text
+                                                               :node/value "r"}
+                                                              {:node/name :<>
+                                                               :node/children [{:node/name :dompa/text
+                                                                                :node/value "l"}
+                                                                               {:node/name :dompa/text
+                                                                                :node/value "d"}]}]}]}]}
+           ($ "hello"
+              (map (fn [x]
+                     ($ x))
+                   ["w" (map (fn [x]
+                               ($ x))
+                             ["o" "r" (map (fn [x]
+                                             ($ x))
+                                           ["l" "d"])])]))))))
 
 (deftest traverse-test
   (let [traverser-fn (fn [node]
