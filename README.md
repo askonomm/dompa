@@ -19,8 +19,8 @@ Add Dompa to your `deps.edn` directly from GitHub:
 
 ```clojure
 {:deps {askonomm/dompa {:git/url "https://github.com/askonomm/dompa"
-                        :git/tag "v1.1.0"
-                        :git/sha "a30919848d19168b4010f37d29c0a42a2c9f8f77"}}}
+                        :git/tag "v1.2.0"
+                        :git/sha "46c90c3f3d9e5a3e0883e6e6305dbd958951ac47"}}}
 ```
 
 -----
@@ -133,7 +133,7 @@ For a more idiomatic and concise way to build node structures, use the `$` helpe
 
 ;; Put it all together
 ($ :button {:class "some-btn"}
-  ($ "hello world"))
+  "hello world")
 ```
 
 All nodes (except text nodes) can be nested. Children are passed as the second argument (if no attributes) or the third argument (if attributes are present).
@@ -166,8 +166,7 @@ The `defhtml` macro creates functions that build and render HTML at compile time
   (:require [dompa.nodes :refer [defhtml $]]))
 
 (defhtml hello-page [who]
-  ($ :div
-    ($ "hello " who)))
+  ($ :div "hello " who))
 
 (hello-page "world")
 ;;=> "<div>hello world</div>"
