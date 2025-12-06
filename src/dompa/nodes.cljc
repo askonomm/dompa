@@ -132,18 +132,26 @@
         attrs? (assoc :node/attrs attrs)
         (seq children) (assoc :node/children (flatten children))))))
 
+(defn- list-of-one?
+  [coll]
+  (and (sequential? coll)
+       (= (count coll) 1)))
+
+(defn- list-of-many?
+  [coll]
+  (and (sequential? coll)
+       (> (count coll) 1)))
+
 (defn- nodes-from-opt
   [opt]
   (cond (map? opt)
         opt
 
-        (and (sequential? opt)
-             (> (count opt) 1))
+        (list-of-many? opt)
         {:node/name :<>
          :node/children opt}
 
-        (and (sequential? opt)
-             (= (count opt) 1))
+        (list-of-one? opt)
         (first opt)
 
         :else
