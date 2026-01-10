@@ -19,8 +19,8 @@ Add Dompa to your `deps.edn` directly from GitHub:
 
 ```clojure
 {:deps {askonomm/dompa {:git/url "https://github.com/askonomm/dompa"
-                        :git/tag "v1.2.0"
-                        :git/sha "eb565a2a5c3dc5b1238fb9c175037121e86c1060"}}}
+                        :git/tag "v1.2.1"
+                        :git/sha "9bece129f5564966b9232216254facf4379a9642"}}}
 ```
 
 -----
