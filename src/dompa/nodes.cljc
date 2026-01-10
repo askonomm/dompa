@@ -142,10 +142,18 @@
   (and (sequential? coll)
        (> (count coll) 1)))
 
+(defn- empty-seq?
+  [coll]
+  (and (sequential? coll)
+       (empty? coll)))
+
 (defn- nodes-from-opt
   [opt]
   (cond (map? opt)
         opt
+
+        (empty-seq? opt)
+        nil
 
         (list-of-many? opt)
         {:node/name :<>
