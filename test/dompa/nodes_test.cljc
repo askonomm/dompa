@@ -31,6 +31,20 @@
   (is (= "<ul><li>one</li><li>two</li><li>three</li></ul>"
          (list-items ["one" "two" "three"]))))
 
+(defhtml empty-list-items [items]
+  ($ :ul
+     (map (fn [item]
+            ($ :li item))
+          items)))
+
+(deftest empty-list-items-test
+  (testing "map over empty vector should not produce LazySeq string"
+    (is (= "<ul></ul>"
+           (empty-list-items []))))
+  (testing "map over non-empty vector should work"
+    (is (= "<ul><li>one</li><li>two</li></ul>"
+           (empty-list-items ["one" "two"])))))
+
 (deftest $-test
   (testing "a simple node"
     (is (= {:node/name     :div
