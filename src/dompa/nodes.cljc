@@ -38,7 +38,7 @@
           (let [value (nodes->html-fn (-> node :node/children))]
             (str html "<" node-name node-attrs ">" value "</" node-name ">"))))
 
-      :else "")))
+      :else html)))
 
 (defn traverse
   "Recursively traverses given tree of `nodes` with a `traverser-fn`
@@ -149,7 +149,10 @@
 
 (defn- nodes-from-opt
   [opt]
-  (cond (map? opt)
+  (cond (nil? opt)
+        nil
+
+        (map? opt)
         opt
 
         (empty-seq? opt)
@@ -157,7 +160,7 @@
 
         (list-of-many? opt)
         {:node/name :<>
-         :node/children opt}
+         :node/children (remove nil? opt)}
 
         (list-of-one? opt)
         (first opt)
@@ -176,7 +179,9 @@
         children-opts (if attrs? (drop 2 opts) (rest opts))
         children-nodes (->> children-opts
                             (map nodes-from-opt)
-                            flatten)]
+                            flatten
+                            (remove nil?)
+                            vec)]
     (cond-> {:node/name first-opt}
       attrs? (assoc :node/attrs attrs)
       (seq children-nodes) (assoc :node/children children-nodes))))

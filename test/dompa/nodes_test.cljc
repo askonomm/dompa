@@ -130,6 +130,44 @@
                                              ($ x))
                                            ["l" "d"])])]))))))
 
+(deftest nil-in-hierarchy-does-not-remove-siblings-test
+  (testing "nil in a fragment should not remove sibling elements"
+    (is (= "<div>one</div><div>two</div>"
+           (nodes/->html
+            [($ :<>
+                ($ :div "one")
+                ($ :div "two")
+                nil)]))))
+
+  (testing "nil between siblings should not affect them"
+    (is (= "<div>one</div><div>two</div>"
+           (nodes/->html
+            [($ :<>
+                ($ :div "one")
+                nil
+                ($ :div "two"))]))))
+
+  (testing "multiple nils should not affect siblings"
+    (is (= "<div>one</div><div>two</div><div>three</div>"
+           (nodes/->html
+            [($ :<>
+                nil
+                ($ :div "one")
+                nil
+                ($ :div "two")
+                nil
+                ($ :div "three")
+                nil)]))))
+
+  (testing "nil inside nested element should not affect parent siblings"
+    (is (= "<div><span>hello</span></div><div>world</div>"
+           (nodes/->html
+            [($ :<>
+                ($ :div
+                   ($ :span "hello")
+                   nil)
+                ($ :div "world"))])))))
+
 (deftest traverse-test
   (let [traverser-fn (fn [node]
                        (if (= :dompa/text (:node/name node))
